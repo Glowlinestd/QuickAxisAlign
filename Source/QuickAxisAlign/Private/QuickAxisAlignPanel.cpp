@@ -3,6 +3,7 @@
 #include "Widgets/SQAACellBorder.h"
 
 #include "Widgets/Layout/SBorder.h"
+#include "Widgets/Layout/SBox.h"
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/Input/SCheckBox.h"
 #include "Widgets/Input/SButton.h"
@@ -15,23 +16,22 @@
 
 void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 {
-	bPosX = bPosY = bPosZ = bPosAll = true;
-	bRotX = bRotY = bRotZ = bRotAll = false;
-	bScaleX = bScaleY = bScaleZ = bScaleAll = false;
+	bPosX = bPosY = bPosZ = true;
+	bRotX = bRotY = bRotZ = false;
+	bScaleX = bScaleY = bScaleZ = false;
 
-	constexpr float PadX = 4.0f;
+	constexpr float LabelW = 76.f;
+	constexpr float AxisW = 44.f;
 
-	const auto MakeTableRow = [this, PadX](
+	const auto MakeTableRow = [this, LabelW, AxisW](
 		const FText& InLabel,
 		const FText& InTooltip,
 		ECheckBoxState(SQuickAxisAlignPanel::* GetX)() const,
 		ECheckBoxState(SQuickAxisAlignPanel::* GetY)() const,
 		ECheckBoxState(SQuickAxisAlignPanel::* GetZ)() const,
-		ECheckBoxState(SQuickAxisAlignPanel::* GetAll)() const,
 		void(SQuickAxisAlignPanel::* OnX)(ECheckBoxState),
 		void(SQuickAxisAlignPanel::* OnY)(ECheckBoxState),
-		void(SQuickAxisAlignPanel::* OnZ)(ECheckBoxState),
-		void(SQuickAxisAlignPanel::* OnAll)(ECheckBoxState)) -> TSharedRef<SWidget>
+		void(SQuickAxisAlignPanel::* OnZ)(ECheckBoxState)) -> TSharedRef<SWidget>
 	{
 		return SNew(SHorizontalBox)
 
@@ -44,26 +44,62 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 					SNew(STextBlock)
 					.Text(InLabel)
 					.Font(FAppStyle::Get().GetFontStyle("NormalFontBold"))
-					.MinDesiredWidth(52)
+					.MinDesiredWidth(LabelW)
 					.ToolTipText(InTooltip)
 				]
 			]
 
 			+ SHorizontalBox::Slot()
-			.FillWidth(1.f)
+			.AutoWidth()
 			[
 				SNew(SQAACellBorder)
 				.Padding(FMargin(8.f, 5.f))
 				[
-					SNew(SHorizontalBox)
-					+ SHorizontalBox::Slot().AutoWidth().Padding(PadX, 0)
-					[ SNew(SCheckBox).ToolTipText(LOCTEXT("AxisX_TT", "Copy this axis")).IsChecked(this, GetX).OnCheckStateChanged(this, OnX)[ SNew(STextBlock).Text(FText::FromString("X")) ] ]
-					+ SHorizontalBox::Slot().AutoWidth().Padding(PadX, 0)
-					[ SNew(SCheckBox).ToolTipText(LOCTEXT("AxisY_TT", "Copy this axis")).IsChecked(this, GetY).OnCheckStateChanged(this, OnY)[ SNew(STextBlock).Text(FText::FromString("Y")) ] ]
-					+ SHorizontalBox::Slot().AutoWidth().Padding(PadX, 0)
-					[ SNew(SCheckBox).ToolTipText(LOCTEXT("AxisZ_TT", "Copy this axis")).IsChecked(this, GetZ).OnCheckStateChanged(this, OnZ)[ SNew(STextBlock).Text(FText::FromString("Z")) ] ]
-					+ SHorizontalBox::Slot().AutoWidth().Padding(PadX, 0)
-					[ SNew(SCheckBox).ToolTipText(LOCTEXT("AxisAll_TT", "Copy all axes")).IsChecked(this, GetAll).OnCheckStateChanged(this, OnAll)[ SNew(STextBlock).Text(LOCTEXT("AllLabel", "All")) ] ]
+					SNew(SBox)
+					.WidthOverride(AxisW)
+					.HAlign(HAlign_Center)
+					[
+						SNew(SCheckBox)
+						.ToolTipText(LOCTEXT("AxisX_TT", "Copy this axis"))
+						.IsChecked(this, GetX)
+						.OnCheckStateChanged(this, OnX)
+					]
+				]
+			]
+
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			[
+				SNew(SQAACellBorder)
+				.Padding(FMargin(8.f, 5.f))
+				[
+					SNew(SBox)
+					.WidthOverride(AxisW)
+					.HAlign(HAlign_Center)
+					[
+						SNew(SCheckBox)
+						.ToolTipText(LOCTEXT("AxisY_TT", "Copy this axis"))
+						.IsChecked(this, GetY)
+						.OnCheckStateChanged(this, OnY)
+					]
+				]
+			]
+
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			[
+				SNew(SQAACellBorder)
+				.Padding(FMargin(8.f, 5.f))
+				[
+					SNew(SBox)
+					.WidthOverride(AxisW)
+					.HAlign(HAlign_Center)
+					[
+						SNew(SCheckBox)
+						.ToolTipText(LOCTEXT("AxisZ_TT", "Copy this axis"))
+						.IsChecked(this, GetZ)
+						.OnCheckStateChanged(this, OnZ)
+					]
 				]
 			];
 	};
@@ -71,22 +107,22 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 	const TSharedRef<SWidget> Row_Loc = MakeTableRow(
 		LOCTEXT("LocationHeader", "Location"),
 		LOCTEXT("Loc_TT", "Copy location from target"),
-		&SQuickAxisAlignPanel::GetPosXState, &SQuickAxisAlignPanel::GetPosYState, &SQuickAxisAlignPanel::GetPosZState, &SQuickAxisAlignPanel::GetPosAllState,
-		&SQuickAxisAlignPanel::OnPosXChanged, &SQuickAxisAlignPanel::OnPosYChanged, &SQuickAxisAlignPanel::OnPosZChanged, &SQuickAxisAlignPanel::OnPosAllChanged
+		&SQuickAxisAlignPanel::GetPosXState, &SQuickAxisAlignPanel::GetPosYState, &SQuickAxisAlignPanel::GetPosZState,
+		&SQuickAxisAlignPanel::OnPosXChanged, &SQuickAxisAlignPanel::OnPosYChanged, &SQuickAxisAlignPanel::OnPosZChanged
 	);
 
 	const TSharedRef<SWidget> Row_Rot = MakeTableRow(
 		LOCTEXT("RotationHeader", "Rotation"),
 		LOCTEXT("Rot_TT", "Copy rotation from target"),
-		&SQuickAxisAlignPanel::GetRotXState, &SQuickAxisAlignPanel::GetRotYState, &SQuickAxisAlignPanel::GetRotZState, &SQuickAxisAlignPanel::GetRotAllState,
-		&SQuickAxisAlignPanel::OnRotXChanged, &SQuickAxisAlignPanel::OnRotYChanged, &SQuickAxisAlignPanel::OnRotZChanged, &SQuickAxisAlignPanel::OnRotAllChanged
+		&SQuickAxisAlignPanel::GetRotXState, &SQuickAxisAlignPanel::GetRotYState, &SQuickAxisAlignPanel::GetRotZState,
+		&SQuickAxisAlignPanel::OnRotXChanged, &SQuickAxisAlignPanel::OnRotYChanged, &SQuickAxisAlignPanel::OnRotZChanged
 	);
 
 	const TSharedRef<SWidget> Row_Scale = MakeTableRow(
 		LOCTEXT("ScaleHeader", "Scale"),
 		LOCTEXT("Scale_TT", "Copy scale from target"),
-		&SQuickAxisAlignPanel::GetScaleXState, &SQuickAxisAlignPanel::GetScaleYState, &SQuickAxisAlignPanel::GetScaleZState, &SQuickAxisAlignPanel::GetScaleAllState,
-		&SQuickAxisAlignPanel::OnScaleXChanged, &SQuickAxisAlignPanel::OnScaleYChanged, &SQuickAxisAlignPanel::OnScaleZChanged, &SQuickAxisAlignPanel::OnScaleAllChanged
+		&SQuickAxisAlignPanel::GetScaleXState, &SQuickAxisAlignPanel::GetScaleYState, &SQuickAxisAlignPanel::GetScaleZState,
+		&SQuickAxisAlignPanel::OnScaleXChanged, &SQuickAxisAlignPanel::OnScaleYChanged, &SQuickAxisAlignPanel::OnScaleZChanged
 	);
 
 	ChildSlot
@@ -176,6 +212,69 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 			.Padding(0, 0, 0, 4)
 			[
 				SNew(SVerticalBox)
+
+				// ── Column header:  X   Y   Z ───────────────────
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				[
+					SNew(SHorizontalBox)
+
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(SQAACellBorder)
+						.Padding(FMargin(8.f, 5.f))
+						[
+							SNew(SSpacer)
+							.Size(FVector2D(LabelW, 1.f))
+						]
+					]
+
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(SQAACellBorder)
+						.Padding(FMargin(8.f, 5.f))
+						.BackgroundColor(FSlateColor(EStyleColor::Header))
+						[
+							SNew(STextBlock)
+							.Text(FText::FromString("X"))
+							.ColorAndOpacity(FSlateColor::UseForeground())
+							.MinDesiredWidth(AxisW)
+							.Justification(ETextJustify::Center)
+						]
+					]
+
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(SQAACellBorder)
+						.Padding(FMargin(8.f, 5.f))
+						.BackgroundColor(FSlateColor(EStyleColor::Header))
+						[
+							SNew(STextBlock)
+							.Text(FText::FromString("Y"))
+							.ColorAndOpacity(FSlateColor::UseForeground())
+							.MinDesiredWidth(AxisW)
+							.Justification(ETextJustify::Center)
+						]
+					]
+
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(SQAACellBorder)
+						.Padding(FMargin(8.f, 5.f))
+						.BackgroundColor(FSlateColor(EStyleColor::Header))
+						[
+							SNew(STextBlock)
+							.Text(FText::FromString("Z"))
+							.ColorAndOpacity(FSlateColor::UseForeground())
+							.MinDesiredWidth(AxisW)
+							.Justification(ETextJustify::Center)
+						]
+					]
+				]
 
 				+ SVerticalBox::Slot()
 				.AutoHeight()
@@ -333,33 +432,19 @@ EVisibility SQuickAxisAlignPanel::GetFeedbackVisibility() const
 
 // ── Location ───────────────────────────────────────────────
 
-void SQuickAxisAlignPanel::OnPosAllChanged(ECheckBoxState NewState)
-{
-	bPosAll = (NewState == ECheckBoxState::Checked);
-	bPosX = bPosY = bPosZ = bPosAll;
-}
-
 void SQuickAxisAlignPanel::OnPosXChanged(ECheckBoxState NewState)
 {
 	bPosX = (NewState == ECheckBoxState::Checked);
-	bPosAll = bPosX && bPosY && bPosZ;
 }
 
 void SQuickAxisAlignPanel::OnPosYChanged(ECheckBoxState NewState)
 {
 	bPosY = (NewState == ECheckBoxState::Checked);
-	bPosAll = bPosX && bPosY && bPosZ;
 }
 
 void SQuickAxisAlignPanel::OnPosZChanged(ECheckBoxState NewState)
 {
 	bPosZ = (NewState == ECheckBoxState::Checked);
-	bPosAll = bPosX && bPosY && bPosZ;
-}
-
-ECheckBoxState SQuickAxisAlignPanel::GetPosAllState() const
-{
-	return bPosAll ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
 }
 
 ECheckBoxState SQuickAxisAlignPanel::GetPosXState() const
@@ -379,33 +464,19 @@ ECheckBoxState SQuickAxisAlignPanel::GetPosZState() const
 
 // ── Rotation ───────────────────────────────────────────────
 
-void SQuickAxisAlignPanel::OnRotAllChanged(ECheckBoxState NewState)
-{
-	bRotAll = (NewState == ECheckBoxState::Checked);
-	bRotX = bRotY = bRotZ = bRotAll;
-}
-
 void SQuickAxisAlignPanel::OnRotXChanged(ECheckBoxState NewState)
 {
 	bRotX = (NewState == ECheckBoxState::Checked);
-	bRotAll = bRotX && bRotY && bRotZ;
 }
 
 void SQuickAxisAlignPanel::OnRotYChanged(ECheckBoxState NewState)
 {
 	bRotY = (NewState == ECheckBoxState::Checked);
-	bRotAll = bRotX && bRotY && bRotZ;
 }
 
 void SQuickAxisAlignPanel::OnRotZChanged(ECheckBoxState NewState)
 {
 	bRotZ = (NewState == ECheckBoxState::Checked);
-	bRotAll = bRotX && bRotY && bRotZ;
-}
-
-ECheckBoxState SQuickAxisAlignPanel::GetRotAllState() const
-{
-	return bRotAll ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
 }
 
 ECheckBoxState SQuickAxisAlignPanel::GetRotXState() const
@@ -425,33 +496,19 @@ ECheckBoxState SQuickAxisAlignPanel::GetRotZState() const
 
 // ── Scale ──────────────────────────────────────────────────
 
-void SQuickAxisAlignPanel::OnScaleAllChanged(ECheckBoxState NewState)
-{
-	bScaleAll = (NewState == ECheckBoxState::Checked);
-	bScaleX = bScaleY = bScaleZ = bScaleAll;
-}
-
 void SQuickAxisAlignPanel::OnScaleXChanged(ECheckBoxState NewState)
 {
 	bScaleX = (NewState == ECheckBoxState::Checked);
-	bScaleAll = bScaleX && bScaleY && bScaleZ;
 }
 
 void SQuickAxisAlignPanel::OnScaleYChanged(ECheckBoxState NewState)
 {
 	bScaleY = (NewState == ECheckBoxState::Checked);
-	bScaleAll = bScaleX && bScaleY && bScaleZ;
 }
 
 void SQuickAxisAlignPanel::OnScaleZChanged(ECheckBoxState NewState)
 {
 	bScaleZ = (NewState == ECheckBoxState::Checked);
-	bScaleAll = bScaleX && bScaleY && bScaleZ;
-}
-
-ECheckBoxState SQuickAxisAlignPanel::GetScaleAllState() const
-{
-	return bScaleAll ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
 }
 
 ECheckBoxState SQuickAxisAlignPanel::GetScaleXState() const
@@ -498,38 +555,17 @@ FReply SQuickAxisAlignPanel::OnApply()
 	FRotator NewRot = SourceRot;
 	FVector NewScale = SourceScale;
 
-	if (bPosAll)
-	{
-		NewLoc = TargetLoc;
-	}
-	else
-	{
-		if (bPosX) NewLoc.X = TargetLoc.X;
-		if (bPosY) NewLoc.Y = TargetLoc.Y;
-		if (bPosZ) NewLoc.Z = TargetLoc.Z;
-	}
+	if (bPosX) NewLoc.X = TargetLoc.X;
+	if (bPosY) NewLoc.Y = TargetLoc.Y;
+	if (bPosZ) NewLoc.Z = TargetLoc.Z;
 
-	if (bRotAll)
-	{
-		NewRot = TargetRot;
-	}
-	else
-	{
-		if (bRotX) NewRot.Roll = TargetRot.Roll;
-		if (bRotY) NewRot.Pitch = TargetRot.Pitch;
-		if (bRotZ) NewRot.Yaw = TargetRot.Yaw;
-	}
+	if (bRotX) NewRot.Roll = TargetRot.Roll;
+	if (bRotY) NewRot.Pitch = TargetRot.Pitch;
+	if (bRotZ) NewRot.Yaw = TargetRot.Yaw;
 
-	if (bScaleAll)
-	{
-		NewScale = TargetScale;
-	}
-	else
-	{
-		if (bScaleX) NewScale.X = TargetScale.X;
-		if (bScaleY) NewScale.Y = TargetScale.Y;
-		if (bScaleZ) NewScale.Z = TargetScale.Z;
-	}
+	if (bScaleX) NewScale.X = TargetScale.X;
+	if (bScaleY) NewScale.Y = TargetScale.Y;
+	if (bScaleZ) NewScale.Z = TargetScale.Z;
 
 	const FScopedTransaction Transaction(LOCTEXT("AlignTransaction", "Quick Axis Align"));
 	Source->Modify();

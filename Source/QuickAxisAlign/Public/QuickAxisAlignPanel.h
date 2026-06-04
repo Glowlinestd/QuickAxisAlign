@@ -27,36 +27,30 @@ private:
 	FText FeedbackText;
 
 	// Position
-	void OnPosAllChanged(ECheckBoxState NewState);
 	void OnPosXChanged(ECheckBoxState NewState);
 	void OnPosYChanged(ECheckBoxState NewState);
 	void OnPosZChanged(ECheckBoxState NewState);
-	ECheckBoxState GetPosAllState() const;
 	ECheckBoxState GetPosXState() const;
 	ECheckBoxState GetPosYState() const;
 	ECheckBoxState GetPosZState() const;
 
 	// Rotation
-	void OnRotAllChanged(ECheckBoxState NewState);
 	void OnRotXChanged(ECheckBoxState NewState);
 	void OnRotYChanged(ECheckBoxState NewState);
 	void OnRotZChanged(ECheckBoxState NewState);
-	ECheckBoxState GetRotAllState() const;
 	ECheckBoxState GetRotXState() const;
 	ECheckBoxState GetRotYState() const;
 	ECheckBoxState GetRotZState() const;
 
 	// Scale
-	void OnScaleAllChanged(ECheckBoxState NewState);
 	void OnScaleXChanged(ECheckBoxState NewState);
 	void OnScaleYChanged(ECheckBoxState NewState);
 	void OnScaleZChanged(ECheckBoxState NewState);
-	ECheckBoxState GetScaleAllState() const;
 	ECheckBoxState GetScaleXState() const;
 	ECheckBoxState GetScaleYState() const;
 	ECheckBoxState GetScaleZState() const;
 
-	bool bPosX, bPosY, bPosZ, bPosAll;
-	bool bRotX, bRotY, bRotZ, bRotAll;
-	bool bScaleX, bScaleY, bScaleZ, bScaleAll;
+	bool bPosX, bPosY, bPosZ;
+	bool bRotX, bRotY, bRotZ;
+	bool bScaleX, bScaleY, bScaleZ;
 };
