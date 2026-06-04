@@ -4,6 +4,7 @@
 
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SBox.h"
+#include "Widgets/Layout/SSplitter.h"
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/Input/SCheckBox.h"
 #include "Widgets/Input/SButton.h"
@@ -21,11 +22,9 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 	bScaleX = bScaleY = bScaleZ = false;
 
 	constexpr float LabelW = 76.f;
-	constexpr float AxisW = 44.f;
+	constexpr float TableRowH = 32.f;
 
-	const auto MakeTableRow = [this, LabelW, AxisW](
-		const FText& InLabel,
-		const FText& InTooltip,
+	const auto MakeAxisRow = [this, TableRowH](
 		ECheckBoxState(SQuickAxisAlignPanel::* GetX)() const,
 		ECheckBoxState(SQuickAxisAlignPanel::* GetY)() const,
 		ECheckBoxState(SQuickAxisAlignPanel::* GetZ)() const,
@@ -33,30 +32,18 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 		void(SQuickAxisAlignPanel::* OnY)(ECheckBoxState),
 		void(SQuickAxisAlignPanel::* OnZ)(ECheckBoxState)) -> TSharedRef<SWidget>
 	{
-		return SNew(SHorizontalBox)
+		return SNew(SBox)
+		.HeightOverride(TableRowH)
+		[
+			SNew(SHorizontalBox)
 
 			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			[
-				SNew(SQAACellBorder)
-				.Padding(FMargin(8.f, 5.f))
-				[
-					SNew(STextBlock)
-					.Text(InLabel)
-					.Font(FAppStyle::Get().GetFontStyle("NormalFontBold"))
-					.MinDesiredWidth(LabelW)
-					.ToolTipText(InTooltip)
-				]
-			]
-
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
+			.FillWidth(1.f)
 			[
 				SNew(SQAACellBorder)
 				.Padding(FMargin(8.f, 5.f))
 				[
 					SNew(SBox)
-					.WidthOverride(AxisW)
 					.HAlign(HAlign_Center)
 					[
 						SNew(SCheckBox)
@@ -68,13 +55,12 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 			]
 
 			+ SHorizontalBox::Slot()
-			.AutoWidth()
+			.FillWidth(1.f)
 			[
 				SNew(SQAACellBorder)
 				.Padding(FMargin(8.f, 5.f))
 				[
 					SNew(SBox)
-					.WidthOverride(AxisW)
 					.HAlign(HAlign_Center)
 					[
 						SNew(SCheckBox)
@@ -86,13 +72,12 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 			]
 
 			+ SHorizontalBox::Slot()
-			.AutoWidth()
+			.FillWidth(1.f)
 			[
 				SNew(SQAACellBorder)
 				.Padding(FMargin(8.f, 5.f))
 				[
 					SNew(SBox)
-					.WidthOverride(AxisW)
 					.HAlign(HAlign_Center)
 					[
 						SNew(SCheckBox)
@@ -101,29 +86,9 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 						.OnCheckStateChanged(this, OnZ)
 					]
 				]
-			];
+			]
+		];
 	};
-
-	const TSharedRef<SWidget> Row_Loc = MakeTableRow(
-		LOCTEXT("LocationHeader", "Location"),
-		LOCTEXT("Loc_TT", "Copy location from target"),
-		&SQuickAxisAlignPanel::GetPosXState, &SQuickAxisAlignPanel::GetPosYState, &SQuickAxisAlignPanel::GetPosZState,
-		&SQuickAxisAlignPanel::OnPosXChanged, &SQuickAxisAlignPanel::OnPosYChanged, &SQuickAxisAlignPanel::OnPosZChanged
-	);
-
-	const TSharedRef<SWidget> Row_Rot = MakeTableRow(
-		LOCTEXT("RotationHeader", "Rotation"),
-		LOCTEXT("Rot_TT", "Copy rotation from target"),
-		&SQuickAxisAlignPanel::GetRotXState, &SQuickAxisAlignPanel::GetRotYState, &SQuickAxisAlignPanel::GetRotZState,
-		&SQuickAxisAlignPanel::OnRotXChanged, &SQuickAxisAlignPanel::OnRotYChanged, &SQuickAxisAlignPanel::OnRotZChanged
-	);
-
-	const TSharedRef<SWidget> Row_Scale = MakeTableRow(
-		LOCTEXT("ScaleHeader", "Scale"),
-		LOCTEXT("Scale_TT", "Copy scale from target"),
-		&SQuickAxisAlignPanel::GetScaleXState, &SQuickAxisAlignPanel::GetScaleYState, &SQuickAxisAlignPanel::GetScaleZState,
-		&SQuickAxisAlignPanel::OnScaleXChanged, &SQuickAxisAlignPanel::OnScaleYChanged, &SQuickAxisAlignPanel::OnScaleZChanged
-	);
 
 	ChildSlot
 	[
@@ -211,82 +176,190 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 			.AutoHeight()
 			.Padding(0, 0, 0, 4)
 			[
-				SNew(SVerticalBox)
+				SNew(SSplitter)
 
-				// ── Column header:  X   Y   Z ───────────────────
-				+ SVerticalBox::Slot()
-				.AutoHeight()
+				+ SSplitter::Slot()
+				.Value(0.25f)
+				.MinSize(LabelW)
 				[
-					SNew(SHorizontalBox)
+					SNew(SVerticalBox)
 
-					+ SHorizontalBox::Slot()
-					.AutoWidth()
+					// ── Label column header ────────────────────
+					+ SVerticalBox::Slot()
+					.AutoHeight()
 					[
-						SNew(SQAACellBorder)
-						.Padding(FMargin(8.f, 5.f))
+						SNew(SBox)
+						.HeightOverride(TableRowH)
 						[
-							SNew(SSpacer)
-							.Size(FVector2D(LabelW, 1.f))
+							SNew(SQAACellBorder)
+							.Padding(FMargin(8.f, 5.f))
+							[
+								SNew(SSpacer)
+								.Size(FVector2D(1.f, 1.f))
+							]
 						]
 					]
 
-					+ SHorizontalBox::Slot()
-					.AutoWidth()
+					// ── Location label ────────────────────────────
+					+ SVerticalBox::Slot()
+					.AutoHeight()
 					[
-						SNew(SQAACellBorder)
-						.Padding(FMargin(8.f, 5.f))
-						.BackgroundColor(FSlateColor(EStyleColor::Header))
+						SNew(SBox)
+						.HeightOverride(TableRowH)
 						[
-							SNew(STextBlock)
-							.Text(FText::FromString("X"))
-							.ColorAndOpacity(FSlateColor::UseForeground())
-							.MinDesiredWidth(AxisW)
-							.Justification(ETextJustify::Center)
+							SNew(SQAACellBorder)
+							.Padding(FMargin(16.f, 5.f, 8.f, 5.f))
+							[
+								SNew(SBox)
+								.HAlign(HAlign_Fill)
+								.VAlign(VAlign_Center)
+								[
+									SNew(STextBlock)
+									.Text(LOCTEXT("LocationHeader", "Location"))
+									.Font(FAppStyle::Get().GetFontStyle("NormalFontBold"))
+									.MinDesiredWidth(LabelW)
+									.ToolTipText(LOCTEXT("Loc_TT", "Copy location from target"))
+								]
+							]
 						]
 					]
 
-					+ SHorizontalBox::Slot()
-					.AutoWidth()
+					// ── Rotation label ────────────────────────────
+					+ SVerticalBox::Slot()
+					.AutoHeight()
 					[
-						SNew(SQAACellBorder)
-						.Padding(FMargin(8.f, 5.f))
-						.BackgroundColor(FSlateColor(EStyleColor::Header))
+						SNew(SBox)
+						.HeightOverride(TableRowH)
 						[
-							SNew(STextBlock)
-							.Text(FText::FromString("Y"))
-							.ColorAndOpacity(FSlateColor::UseForeground())
-							.MinDesiredWidth(AxisW)
-							.Justification(ETextJustify::Center)
+							SNew(SQAACellBorder)
+							.Padding(FMargin(16.f, 5.f, 8.f, 5.f))
+							[
+								SNew(SBox)
+								.HAlign(HAlign_Fill)
+								.VAlign(VAlign_Center)
+								[
+									SNew(STextBlock)
+									.Text(LOCTEXT("RotationHeader", "Rotation"))
+									.Font(FAppStyle::Get().GetFontStyle("NormalFontBold"))
+									.MinDesiredWidth(LabelW)
+									.ToolTipText(LOCTEXT("Rot_TT", "Copy rotation from target"))
+								]
+							]
 						]
 					]
 
-					+ SHorizontalBox::Slot()
-					.AutoWidth()
+					// ── Scale label ────────────────────────────
+					+ SVerticalBox::Slot()
+					.AutoHeight()
 					[
-						SNew(SQAACellBorder)
-						.Padding(FMargin(8.f, 5.f))
-						.BackgroundColor(FSlateColor(EStyleColor::Header))
+						SNew(SBox)
+						.HeightOverride(TableRowH)
 						[
-							SNew(STextBlock)
-							.Text(FText::FromString("Z"))
-							.ColorAndOpacity(FSlateColor::UseForeground())
-							.MinDesiredWidth(AxisW)
-							.Justification(ETextJustify::Center)
+							SNew(SQAACellBorder)
+							.Padding(FMargin(16.f, 5.f, 8.f, 5.f))
+							[
+								SNew(SBox)
+								.HAlign(HAlign_Fill)
+								.VAlign(VAlign_Center)
+								[
+									SNew(STextBlock)
+									.Text(LOCTEXT("ScaleHeader", "Scale"))
+									.Font(FAppStyle::Get().GetFontStyle("NormalFontBold"))
+									.MinDesiredWidth(LabelW)
+									.ToolTipText(LOCTEXT("Scale_TT", "Copy scale from target"))
+								]
+							]
 						]
 					]
 				]
 
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				[ Row_Loc ]
+				+ SSplitter::Slot()
+				[
+					SNew(SVerticalBox)
 
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				[ Row_Rot ]
+					// ── Header: X  Y  Z ──────────────────────────
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					[
+						SNew(SBox)
+						.HeightOverride(TableRowH)
+						[
+							SNew(SHorizontalBox)
 
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				[ Row_Scale ]
+							+ SHorizontalBox::Slot()
+							.FillWidth(1.f)
+							[
+								SNew(SQAACellBorder)
+								.Padding(FMargin(8.f, 5.f))
+								.BackgroundColor(FSlateColor(EStyleColor::Header))
+								[
+									SNew(STextBlock)
+									.Text(FText::FromString("X"))
+									.ColorAndOpacity(FSlateColor::UseForeground())
+									.Justification(ETextJustify::Center)
+								]
+							]
+
+							+ SHorizontalBox::Slot()
+							.FillWidth(1.f)
+							[
+								SNew(SQAACellBorder)
+								.Padding(FMargin(8.f, 5.f))
+								.BackgroundColor(FSlateColor(EStyleColor::Header))
+								[
+									SNew(STextBlock)
+									.Text(FText::FromString("Y"))
+									.ColorAndOpacity(FSlateColor::UseForeground())
+									.Justification(ETextJustify::Center)
+								]
+							]
+
+							+ SHorizontalBox::Slot()
+							.FillWidth(1.f)
+							[
+								SNew(SQAACellBorder)
+								.Padding(FMargin(8.f, 5.f))
+								.BackgroundColor(FSlateColor(EStyleColor::Header))
+								[
+									SNew(STextBlock)
+									.Text(FText::FromString("Z"))
+									.ColorAndOpacity(FSlateColor::UseForeground())
+									.Justification(ETextJustify::Center)
+								]
+							]
+						]
+					]
+
+					// ── Location checkboxes ────────────────────
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					[
+						MakeAxisRow(
+							&SQuickAxisAlignPanel::GetPosXState, &SQuickAxisAlignPanel::GetPosYState, &SQuickAxisAlignPanel::GetPosZState,
+							&SQuickAxisAlignPanel::OnPosXChanged, &SQuickAxisAlignPanel::OnPosYChanged, &SQuickAxisAlignPanel::OnPosZChanged
+						)
+					]
+
+					// ── Rotation checkboxes ────────────────────
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					[
+						MakeAxisRow(
+							&SQuickAxisAlignPanel::GetRotXState, &SQuickAxisAlignPanel::GetRotYState, &SQuickAxisAlignPanel::GetRotZState,
+							&SQuickAxisAlignPanel::OnRotXChanged, &SQuickAxisAlignPanel::OnRotYChanged, &SQuickAxisAlignPanel::OnRotZChanged
+						)
+					]
+
+					// ── Scale checkboxes ───────────────────────
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					[
+						MakeAxisRow(
+							&SQuickAxisAlignPanel::GetScaleXState, &SQuickAxisAlignPanel::GetScaleYState, &SQuickAxisAlignPanel::GetScaleZState,
+							&SQuickAxisAlignPanel::OnScaleXChanged, &SQuickAxisAlignPanel::OnScaleYChanged, &SQuickAxisAlignPanel::OnScaleZChanged
+						)
+					]
+				]
 			]
 
 			// ── Spacer ───────────────────────────────────────────
