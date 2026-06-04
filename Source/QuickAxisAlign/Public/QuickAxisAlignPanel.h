@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Widgets/SCompoundWidget.h"
-#include "Engine/Selection.h"
 
 class SQuickAxisAlignPanel : public SCompoundWidget
 {
@@ -16,9 +15,16 @@ private:
 	void OnActorSelectionChanged(UObject* InObject);
 	FReply OnApply();
 
-	FText GetLine1Text() const;
-	FText GetLine2Text() const;
-	bool IsApplyEnabled() const;
+	FText GetSourceValueText() const;
+	FText GetTargetValueText() const;
+
+	FText GetInstructionText() const;
+	bool HasValidSelection() const;
+
+	FText GetFeedbackText() const;
+	EVisibility GetFeedbackVisibility() const;
+
+	FText FeedbackText;
 
 	// Position
 	void OnPosAllChanged(ECheckBoxState NewState);

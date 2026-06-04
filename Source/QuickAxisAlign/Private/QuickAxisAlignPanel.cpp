@@ -1,11 +1,14 @@
 #include "QuickAxisAlignPanel.h"
 
+#include "Widgets/SQAACellBorder.h"
+
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/Input/SCheckBox.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Text/STextBlock.h"
 #include "Styling/AppStyle.h"
+#include "Engine/Selection.h"
 #include "Editor.h"
 
 #define LOCTEXT_NAMESPACE "SQuickAxisAlignPanel"
@@ -16,228 +19,199 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 	bRotX = bRotY = bRotZ = bRotAll = false;
 	bScaleX = bScaleY = bScaleZ = bScaleAll = false;
 
-	const float PadX = 4.0f;
+	constexpr float PadX = 4.0f;
+
+	const auto MakeTableRow = [this, PadX](
+		const FText& InLabel,
+		const FText& InTooltip,
+		ECheckBoxState(SQuickAxisAlignPanel::* GetX)() const,
+		ECheckBoxState(SQuickAxisAlignPanel::* GetY)() const,
+		ECheckBoxState(SQuickAxisAlignPanel::* GetZ)() const,
+		ECheckBoxState(SQuickAxisAlignPanel::* GetAll)() const,
+		void(SQuickAxisAlignPanel::* OnX)(ECheckBoxState),
+		void(SQuickAxisAlignPanel::* OnY)(ECheckBoxState),
+		void(SQuickAxisAlignPanel::* OnZ)(ECheckBoxState),
+		void(SQuickAxisAlignPanel::* OnAll)(ECheckBoxState)) -> TSharedRef<SWidget>
+	{
+		return SNew(SHorizontalBox)
+
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			[
+				SNew(SQAACellBorder)
+				.Padding(FMargin(8.f, 5.f))
+				[
+					SNew(STextBlock)
+					.Text(InLabel)
+					.Font(FAppStyle::Get().GetFontStyle("NormalFontBold"))
+					.MinDesiredWidth(52)
+					.ToolTipText(InTooltip)
+				]
+			]
+
+			+ SHorizontalBox::Slot()
+			.FillWidth(1.f)
+			[
+				SNew(SQAACellBorder)
+				.Padding(FMargin(8.f, 5.f))
+				[
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot().AutoWidth().Padding(PadX, 0)
+					[ SNew(SCheckBox).ToolTipText(LOCTEXT("AxisX_TT", "Copy this axis")).IsChecked(this, GetX).OnCheckStateChanged(this, OnX)[ SNew(STextBlock).Text(FText::FromString("X")) ] ]
+					+ SHorizontalBox::Slot().AutoWidth().Padding(PadX, 0)
+					[ SNew(SCheckBox).ToolTipText(LOCTEXT("AxisY_TT", "Copy this axis")).IsChecked(this, GetY).OnCheckStateChanged(this, OnY)[ SNew(STextBlock).Text(FText::FromString("Y")) ] ]
+					+ SHorizontalBox::Slot().AutoWidth().Padding(PadX, 0)
+					[ SNew(SCheckBox).ToolTipText(LOCTEXT("AxisZ_TT", "Copy this axis")).IsChecked(this, GetZ).OnCheckStateChanged(this, OnZ)[ SNew(STextBlock).Text(FText::FromString("Z")) ] ]
+					+ SHorizontalBox::Slot().AutoWidth().Padding(PadX, 0)
+					[ SNew(SCheckBox).ToolTipText(LOCTEXT("AxisAll_TT", "Copy all axes")).IsChecked(this, GetAll).OnCheckStateChanged(this, OnAll)[ SNew(STextBlock).Text(LOCTEXT("AllLabel", "All")) ] ]
+				]
+			];
+	};
+
+	const TSharedRef<SWidget> Row_Loc = MakeTableRow(
+		LOCTEXT("LocationHeader", "Location"),
+		LOCTEXT("Loc_TT", "Copy location from target"),
+		&SQuickAxisAlignPanel::GetPosXState, &SQuickAxisAlignPanel::GetPosYState, &SQuickAxisAlignPanel::GetPosZState, &SQuickAxisAlignPanel::GetPosAllState,
+		&SQuickAxisAlignPanel::OnPosXChanged, &SQuickAxisAlignPanel::OnPosYChanged, &SQuickAxisAlignPanel::OnPosZChanged, &SQuickAxisAlignPanel::OnPosAllChanged
+	);
+
+	const TSharedRef<SWidget> Row_Rot = MakeTableRow(
+		LOCTEXT("RotationHeader", "Rotation"),
+		LOCTEXT("Rot_TT", "Copy rotation from target"),
+		&SQuickAxisAlignPanel::GetRotXState, &SQuickAxisAlignPanel::GetRotYState, &SQuickAxisAlignPanel::GetRotZState, &SQuickAxisAlignPanel::GetRotAllState,
+		&SQuickAxisAlignPanel::OnRotXChanged, &SQuickAxisAlignPanel::OnRotYChanged, &SQuickAxisAlignPanel::OnRotZChanged, &SQuickAxisAlignPanel::OnRotAllChanged
+	);
+
+	const TSharedRef<SWidget> Row_Scale = MakeTableRow(
+		LOCTEXT("ScaleHeader", "Scale"),
+		LOCTEXT("Scale_TT", "Copy scale from target"),
+		&SQuickAxisAlignPanel::GetScaleXState, &SQuickAxisAlignPanel::GetScaleYState, &SQuickAxisAlignPanel::GetScaleZState, &SQuickAxisAlignPanel::GetScaleAllState,
+		&SQuickAxisAlignPanel::OnScaleXChanged, &SQuickAxisAlignPanel::OnScaleYChanged, &SQuickAxisAlignPanel::OnScaleZChanged, &SQuickAxisAlignPanel::OnScaleAllChanged
+	);
 
 	ChildSlot
 	[
 		SNew(SBorder)
 		.BorderImage(FAppStyle::Get().GetBrush("ToolPanel.GroupBorder"))
-		.Padding(10.0f)
+		.Padding(8.0f)
 		[
 			SNew(SVerticalBox)
 
-			// Status line 1
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			.Padding(0, 0, 0, 2)
-			[
-				SNew(STextBlock)
-				.Text(this, &SQuickAxisAlignPanel::GetLine1Text)
-				.Font(FAppStyle::Get().GetFontStyle("NormalFont"))
-			]
-
-			// Status line 2
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			.Padding(0, 0, 0, 8)
-			[
-				SNew(STextBlock)
-				.Text(this, &SQuickAxisAlignPanel::GetLine2Text)
-				.Font(FAppStyle::Get().GetFontStyle("NormalFont"))
-			]
-
-			// Separator
+			// ── Selection status ────────────────────────────
 			+ SVerticalBox::Slot()
 			.AutoHeight()
 			.Padding(0, 0, 0, 6)
 			[
 				SNew(SBorder)
-				.BorderImage(FAppStyle::Get().GetBrush("Separator"))
-				.Padding(0)
+				.BorderImage(FAppStyle::Get().GetBrush("DetailsView.CategoryTop"))
+				.Padding(FMargin(8, 6))
+				.ToolTipText(this, &SQuickAxisAlignPanel::GetInstructionText)
+				[
+					SNew(SVerticalBox)
+
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					.Padding(0, 0, 0, 2)
+					[
+						SNew(SHorizontalBox)
+						+ SHorizontalBox::Slot()
+						.AutoWidth()
+						[
+							SNew(STextBlock)
+							.Text(LOCTEXT("SourceLabel", "Source"))
+							.Font(FAppStyle::Get().GetFontStyle("NormalFontBold"))
+							.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+						]
+						+ SHorizontalBox::Slot()
+						.AutoWidth()
+						.Padding(12, 0, 0, 0)
+						[
+							SNew(STextBlock)
+							.Text(this, &SQuickAxisAlignPanel::GetSourceValueText)
+							.Font(FAppStyle::Get().GetFontStyle("NormalFont"))
+						]
+					]
+
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					[
+						SNew(SHorizontalBox)
+						+ SHorizontalBox::Slot()
+						.AutoWidth()
+						[
+							SNew(STextBlock)
+							.Text(LOCTEXT("TargetLabel", "Target"))
+							.Font(FAppStyle::Get().GetFontStyle("NormalFontBold"))
+							.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+						]
+						+ SHorizontalBox::Slot()
+						.AutoWidth()
+						.Padding(12, 0, 0, 0)
+						[
+							SNew(STextBlock)
+							.Text(this, &SQuickAxisAlignPanel::GetTargetValueText)
+							.Font(FAppStyle::Get().GetFontStyle("NormalFont"))
+						]
+					]
+				]
 			]
 
-			// --- Position ---
+			// ── Instruction (always visible, keeps height) ───
 			+ SVerticalBox::Slot()
 			.AutoHeight()
-			.Padding(0, 3)
+			.Padding(0, 0, 0, 6)
 			[
-				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				.VAlign(VAlign_Center)
-				.Padding(0, 0, 12, 0)
-				[
-					SNew(STextBlock)
-					.Text(LOCTEXT("PositionLabel", "Position"))
-					.Font(FAppStyle::Get().GetFontStyle("NormalFontBold"))
-					.MinDesiredWidth(55)
-				]
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				.Padding(PadX, 0)
-				[
-					SNew(SCheckBox)
-					.IsChecked(this, &SQuickAxisAlignPanel::GetPosXState)
-					.OnCheckStateChanged(this, &SQuickAxisAlignPanel::OnPosXChanged)
-					[ SNew(STextBlock).Text(FText::FromString("X")) ]
-				]
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				.Padding(PadX, 0)
-				[
-					SNew(SCheckBox)
-					.IsChecked(this, &SQuickAxisAlignPanel::GetPosYState)
-					.OnCheckStateChanged(this, &SQuickAxisAlignPanel::OnPosYChanged)
-					[ SNew(STextBlock).Text(FText::FromString("Y")) ]
-				]
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				.Padding(PadX, 0)
-				[
-					SNew(SCheckBox)
-					.IsChecked(this, &SQuickAxisAlignPanel::GetPosZState)
-					.OnCheckStateChanged(this, &SQuickAxisAlignPanel::OnPosZChanged)
-					[ SNew(STextBlock).Text(FText::FromString("Z")) ]
-				]
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				.Padding(PadX, 0)
-				[
-					SNew(SCheckBox)
-					.IsChecked(this, &SQuickAxisAlignPanel::GetPosAllState)
-					.OnCheckStateChanged(this, &SQuickAxisAlignPanel::OnPosAllChanged)
-					[ SNew(STextBlock).Text(LOCTEXT("AllLabel", "All")) ]
-				]
+				SNew(STextBlock)
+				.Text(this, &SQuickAxisAlignPanel::GetInstructionText)
+				.Font(FAppStyle::Get().GetFontStyle("SmallText"))
+				.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+				.Visibility(EVisibility::SelfHitTestInvisible)
 			]
 
-			// --- Rotation ---
+			// ── Table: Location / Rotation / Scale ──────────
 			+ SVerticalBox::Slot()
 			.AutoHeight()
-			.Padding(0, 3)
+			.Padding(0, 0, 0, 4)
 			[
-				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				.VAlign(VAlign_Center)
-				.Padding(0, 0, 12, 0)
-				[
-					SNew(STextBlock)
-					.Text(LOCTEXT("RotationLabel", "Rotation"))
-					.Font(FAppStyle::Get().GetFontStyle("NormalFontBold"))
-					.MinDesiredWidth(55)
-				]
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				.Padding(PadX, 0)
-				[
-					SNew(SCheckBox)
-					.IsChecked(this, &SQuickAxisAlignPanel::GetRotXState)
-					.OnCheckStateChanged(this, &SQuickAxisAlignPanel::OnRotXChanged)
-					[ SNew(STextBlock).Text(FText::FromString("X")) ]
-				]
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				.Padding(PadX, 0)
-				[
-					SNew(SCheckBox)
-					.IsChecked(this, &SQuickAxisAlignPanel::GetRotYState)
-					.OnCheckStateChanged(this, &SQuickAxisAlignPanel::OnRotYChanged)
-					[ SNew(STextBlock).Text(FText::FromString("Y")) ]
-				]
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				.Padding(PadX, 0)
-				[
-					SNew(SCheckBox)
-					.IsChecked(this, &SQuickAxisAlignPanel::GetRotZState)
-					.OnCheckStateChanged(this, &SQuickAxisAlignPanel::OnRotZChanged)
-					[ SNew(STextBlock).Text(FText::FromString("Z")) ]
-				]
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				.Padding(PadX, 0)
-				[
-					SNew(SCheckBox)
-					.IsChecked(this, &SQuickAxisAlignPanel::GetRotAllState)
-					.OnCheckStateChanged(this, &SQuickAxisAlignPanel::OnRotAllChanged)
-					[ SNew(STextBlock).Text(LOCTEXT("AllLabel", "All")) ]
-				]
+				SNew(SVerticalBox)
+
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				[ Row_Loc ]
+
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				[ Row_Rot ]
+
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				[ Row_Scale ]
 			]
 
-			// --- Scale ---
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			.Padding(0, 3)
-			[
-				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				.VAlign(VAlign_Center)
-				.Padding(0, 0, 12, 0)
-				[
-					SNew(STextBlock)
-					.Text(LOCTEXT("ScaleLabel", "Scale"))
-					.Font(FAppStyle::Get().GetFontStyle("NormalFontBold"))
-					.MinDesiredWidth(55)
-				]
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				.Padding(PadX, 0)
-				[
-					SNew(SCheckBox)
-					.IsChecked(this, &SQuickAxisAlignPanel::GetScaleXState)
-					.OnCheckStateChanged(this, &SQuickAxisAlignPanel::OnScaleXChanged)
-					[ SNew(STextBlock).Text(FText::FromString("X")) ]
-				]
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				.Padding(PadX, 0)
-				[
-					SNew(SCheckBox)
-					.IsChecked(this, &SQuickAxisAlignPanel::GetScaleYState)
-					.OnCheckStateChanged(this, &SQuickAxisAlignPanel::OnScaleYChanged)
-					[ SNew(STextBlock).Text(FText::FromString("Y")) ]
-				]
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				.Padding(PadX, 0)
-				[
-					SNew(SCheckBox)
-					.IsChecked(this, &SQuickAxisAlignPanel::GetScaleZState)
-					.OnCheckStateChanged(this, &SQuickAxisAlignPanel::OnScaleZChanged)
-					[ SNew(STextBlock).Text(FText::FromString("Z")) ]
-				]
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				.Padding(PadX, 0)
-				[
-					SNew(SCheckBox)
-					.IsChecked(this, &SQuickAxisAlignPanel::GetScaleAllState)
-					.OnCheckStateChanged(this, &SQuickAxisAlignPanel::OnScaleAllChanged)
-					[ SNew(STextBlock).Text(LOCTEXT("AllLabel", "All")) ]
-				]
-			]
-
-			// Separator
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			.Padding(0, 6, 0, 6)
-			[
-				SNew(SBorder)
-				.BorderImage(FAppStyle::Get().GetBrush("Separator"))
-				.Padding(0)
-			]
-
-			// Apply
+			// ── Apply ─────────────────────────────────────────
 			+ SVerticalBox::Slot()
 			.AutoHeight()
 			.HAlign(HAlign_Center)
 			[
 				SNew(SButton)
-				.Text(LOCTEXT("ApplyButton", "Apply"))
+				.Text(LOCTEXT("ApplyButton", "Apply Alignment"))
 				.OnClicked(this, &SQuickAxisAlignPanel::OnApply)
-				.IsEnabled(this, &SQuickAxisAlignPanel::IsApplyEnabled)
+				.IsEnabled(this, &SQuickAxisAlignPanel::HasValidSelection)
 				.ButtonStyle(FAppStyle::Get(), "PrimaryButton")
+				.ToolTipText(LOCTEXT("ApplyTT", "Apply the selected transform channels from Target to Source"))
+			]
+
+			// ── Feedback ──────────────────────────────────────
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0, 4, 0, 0)
+			.HAlign(HAlign_Center)
+			[
+				SNew(STextBlock)
+				.Text(this, &SQuickAxisAlignPanel::GetFeedbackText)
+				.Font(FAppStyle::Get().GetFontStyle("SmallText"))
+				.ColorAndOpacity(FLinearColor(0.2f, 0.6f, 0.2f))
+				.Visibility(this, &SQuickAxisAlignPanel::GetFeedbackVisibility)
 			]
 		]
 	];
@@ -264,81 +238,94 @@ SQuickAxisAlignPanel::~SQuickAxisAlignPanel()
 	}
 }
 
+// ── Selection change ──────────────────────────────────────
+
 void SQuickAxisAlignPanel::OnActorSelectionChanged(UObject* InObject)
 {
+	FeedbackText = FText::GetEmpty();
 	Invalidate(EInvalidateWidgetReason::Paint);
 }
 
-// --- Status text ---
+// ── Source / Target labels ─────────────────────────────────
 
-FText SQuickAxisAlignPanel::GetLine1Text() const
+FText SQuickAxisAlignPanel::GetSourceValueText() const
 {
-	if (!GEditor)
-		return LOCTEXT("NoEditor", "Editor not available.");
+	if (!GEditor) return FText::GetEmpty();
 
-	USelection* Selection = GEditor->GetSelectedActors();
-	if (!Selection)
-		return LOCTEXT("NoSelection", "No selection available.");
-
-	const int32 Num = Selection->Num();
-	if (Num == 0)
-		return LOCTEXT("SelectFirst", "1. Select the actor to align");
+	USelection* Sel = GEditor->GetSelectedActors();
+	if (!Sel) return FText::GetEmpty();
 
 	TArray<AActor*> Actors;
-	Selection->GetSelectedObjects(Actors);
+	Sel->GetSelectedObjects(Actors);
 
-	if (Num == 1)
+	if (Actors.Num() >= 1)
 	{
-		return FText::Format(LOCTEXT("SourceOnly", "Source: {0}"), FText::FromString(Actors[0]->GetActorLabel()));
+		FString Label = Actors[0]->GetActorLabel();
+		return FText::FromString(Label);
 	}
-	if (Num == 2)
-	{
-		return FText::Format(LOCTEXT("SourceName", "Source: {0}"), FText::FromString(Actors[0]->GetActorLabel()));
-	}
-
-	return LOCTEXT("TooMany", "Too many actors selected.");
+	return LOCTEXT("NoneSelected", "—");
 }
 
-FText SQuickAxisAlignPanel::GetLine2Text() const
+FText SQuickAxisAlignPanel::GetTargetValueText() const
 {
-	if (!GEditor)
-		return FText::GetEmpty();
+	if (!GEditor) return FText::GetEmpty();
 
-	USelection* Selection = GEditor->GetSelectedActors();
-	if (!Selection)
-		return FText::GetEmpty();
-
-	const int32 Num = Selection->Num();
-	if (Num == 0)
-		return LOCTEXT("SelectSecond", "2. Select the target actor");
-
-	if (Num == 1)
-		return LOCTEXT("NeedTarget", "2. Select the target actor");
+	USelection* Sel = GEditor->GetSelectedActors();
+	if (!Sel) return FText::GetEmpty();
 
 	TArray<AActor*> Actors;
-	Selection->GetSelectedObjects(Actors);
+	Sel->GetSelectedObjects(Actors);
 
-	if (Num >= 2)
+	if (Actors.Num() >= 2)
 	{
-		return FText::Format(LOCTEXT("TargetName", "Target: {0}"), FText::FromString(Actors[1]->GetActorLabel()));
+		FString Label = Actors[1]->GetActorLabel();
+		return FText::FromString(Label);
 	}
-
-	return FText::GetEmpty();
+	return LOCTEXT("NoneSelected", "—");
 }
 
-bool SQuickAxisAlignPanel::IsApplyEnabled() const
+FText SQuickAxisAlignPanel::GetInstructionText() const
 {
-	if (!GEditor)
-		return false;
+	if (!GEditor) return FText::FromString(" ");
 
-	USelection* Selection = GEditor->GetSelectedActors();
-	if (!Selection || Selection->Num() != 2)
-		return false;
+	USelection* Sel = GEditor->GetSelectedActors();
+	if (!Sel) return FText::FromString(" ");
 
-	return true;
+	const int32 Num = Sel->Num();
+	if (Num == 0 || Num == 1)
+	{
+		return LOCTEXT("Instr_SelectTwo", "Select exactly 2 actors (Source first, then Target with Shift)");
+	}
+	if (Num > 2)
+	{
+		return LOCTEXT("Instr_TooMany", "Too many selected — deselect and pick only 2 actors");
+	}
+	return FText::FromString(" ");
 }
 
-// --- Position ---
+bool SQuickAxisAlignPanel::HasValidSelection() const
+{
+	if (!GEditor) return false;
+
+	USelection* Sel = GEditor->GetSelectedActors();
+	if (!Sel) return false;
+
+	return Sel->Num() == 2;
+}
+
+// ── Feedback ───────────────────────────────────────────────
+
+FText SQuickAxisAlignPanel::GetFeedbackText() const
+{
+	return FeedbackText;
+}
+
+EVisibility SQuickAxisAlignPanel::GetFeedbackVisibility() const
+{
+	return FeedbackText.IsEmpty() ? EVisibility::Collapsed : EVisibility::HitTestInvisible;
+}
+
+// ── Location ───────────────────────────────────────────────
 
 void SQuickAxisAlignPanel::OnPosAllChanged(ECheckBoxState NewState)
 {
@@ -384,7 +371,7 @@ ECheckBoxState SQuickAxisAlignPanel::GetPosZState() const
 	return bPosZ ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
 }
 
-// --- Rotation ---
+// ── Rotation ───────────────────────────────────────────────
 
 void SQuickAxisAlignPanel::OnRotAllChanged(ECheckBoxState NewState)
 {
@@ -430,7 +417,7 @@ ECheckBoxState SQuickAxisAlignPanel::GetRotZState() const
 	return bRotZ ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
 }
 
-// --- Scale ---
+// ── Scale ──────────────────────────────────────────────────
 
 void SQuickAxisAlignPanel::OnScaleAllChanged(ECheckBoxState NewState)
 {
@@ -476,7 +463,7 @@ ECheckBoxState SQuickAxisAlignPanel::GetScaleZState() const
 	return bScaleZ ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
 }
 
-// --- Apply ---
+// ── Apply ──────────────────────────────────────────────────
 
 FReply SQuickAxisAlignPanel::OnApply()
 {
@@ -547,6 +534,8 @@ FReply SQuickAxisAlignPanel::OnApply()
 		Source->SetActorRotation(NewRot);
 	if (NewScale != SourceScale)
 		Source->SetActorScale3D(NewScale);
+
+	FeedbackText = FText::Format(LOCTEXT("AppliedFeedback", "Applied to {0}"), FText::FromString(Source->GetActorLabel()));
 
 	GEditor->SelectActor(Target, false, true);
 
