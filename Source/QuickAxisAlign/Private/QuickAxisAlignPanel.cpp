@@ -92,7 +92,8 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 	ChildSlot
 	[
 		SNew(SBorder)
-		.BorderImage(FAppStyle::Get().GetBrush("ToolPanel.GroupBorder"))
+		.BorderImage(FAppStyle::Get().GetBrush("WhiteBrush"))
+		.BorderBackgroundColor(FSlateColor(EStyleColor::Recessed))
 		.Padding(8.0f)
 		[
 			SNew(SVerticalBox)
@@ -103,7 +104,8 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 			.Padding(0, 0, 0, 6)
 			[
 				SNew(SBorder)
-				.BorderImage(FAppStyle::Get().GetBrush("DetailsView.CategoryTop"))
+				.BorderImage(FAppStyle::Get().GetBrush("WhiteBrush"))
+				.BorderBackgroundColor(FSlateColor(EStyleColor::Background))
 				.Padding(FMargin(8, 6))
 				.ToolTipText(this, &SQuickAxisAlignPanel::GetInstructionText)
 				[
@@ -188,13 +190,17 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 				[ Row_Scale ]
 			]
 
+			// ── Spacer ───────────────────────────────────────────
+			+ SVerticalBox::Slot()
+			.FillHeight(1.f)
+
 			// ── Apply ─────────────────────────────────────────
 			+ SVerticalBox::Slot()
 			.AutoHeight()
-			.HAlign(HAlign_Center)
+			.HAlign(HAlign_Left)
 			[
 				SNew(SButton)
-				.Text(LOCTEXT("ApplyButton", "Apply Alignment"))
+				.Text(LOCTEXT("ApplyButton", "Apply"))
 				.OnClicked(this, &SQuickAxisAlignPanel::OnApply)
 				.IsEnabled(this, &SQuickAxisAlignPanel::HasValidSelection)
 				.ButtonStyle(FAppStyle::Get(), "PrimaryButton")
