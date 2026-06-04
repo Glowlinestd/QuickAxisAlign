@@ -15,14 +15,17 @@
 
 #define LOCTEXT_NAMESPACE "SQuickAxisAlignPanel"
 
-void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
-{
-	bPosX = bPosY = bPosZ = true;
-	bRotX = bRotY = bRotZ = false;
-	bScaleX = bScaleY = bScaleZ = false;
+	void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
+	{
+		bPosX = bPosY = bPosZ = true;
+		bRotX = bRotY = bRotZ = false;
+		bScaleX = bScaleY = bScaleZ = false;
 
-	constexpr float LabelW = 76.f;
-	constexpr float TableRowH = 32.f;
+		constexpr float LabelW = 76.f;
+		constexpr float TableRowH = 28.f;
+
+		FSlateFontInfo PanelFont = FAppStyle::Get().GetFontStyle("NormalText");
+		PanelFont.Size = 9;
 
 	const auto MakeAxisRow = [this, TableRowH](
 		ECheckBoxState(SQuickAxisAlignPanel::* GetX)() const,
@@ -120,10 +123,10 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 						+ SHorizontalBox::Slot()
 						.AutoWidth()
 						[
-							SNew(STextBlock)
-							.Text(LOCTEXT("SourceLabel", "Source"))
-							.Font(FAppStyle::Get().GetFontStyle("NormalFontBold"))
-							.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+						SNew(STextBlock)
+						.Text(LOCTEXT("SourceLabel", "Source"))
+						.Font(PanelFont)
+						.ColorAndOpacity(FSlateColor::UseSubduedForeground())
 						]
 						+ SHorizontalBox::Slot()
 						.AutoWidth()
@@ -131,7 +134,7 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 						[
 							SNew(STextBlock)
 							.Text(this, &SQuickAxisAlignPanel::GetSourceValueText)
-							.Font(FAppStyle::Get().GetFontStyle("NormalFont"))
+							.Font(PanelFont)
 						]
 					]
 
@@ -144,17 +147,17 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 						[
 							SNew(STextBlock)
 							.Text(LOCTEXT("TargetLabel", "Target"))
-							.Font(FAppStyle::Get().GetFontStyle("NormalFontBold"))
+							.Font(PanelFont)
 							.ColorAndOpacity(FSlateColor::UseSubduedForeground())
-						]
-						+ SHorizontalBox::Slot()
-						.AutoWidth()
-						.Padding(12, 0, 0, 0)
-						[
-							SNew(STextBlock)
-							.Text(this, &SQuickAxisAlignPanel::GetTargetValueText)
-							.Font(FAppStyle::Get().GetFontStyle("NormalFont"))
-						]
+							]
+							+ SHorizontalBox::Slot()
+							.AutoWidth()
+							.Padding(12, 0, 0, 0)
+							[
+								SNew(STextBlock)
+								.Text(this, &SQuickAxisAlignPanel::GetTargetValueText)
+								.Font(PanelFont)
+							]
 					]
 				]
 			]
@@ -166,7 +169,7 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 			[
 				SNew(STextBlock)
 				.Text(this, &SQuickAxisAlignPanel::GetInstructionText)
-				.Font(FAppStyle::Get().GetFontStyle("SmallText"))
+				.Font(PanelFont)
 				.ColorAndOpacity(FSlateColor::UseSubduedForeground())
 				.Visibility(EVisibility::SelfHitTestInvisible)
 			]
@@ -177,9 +180,10 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 			.Padding(0, 0, 0, 4)
 			[
 				SNew(SSplitter)
+				.PhysicalSplitterHandleSize(1.25f)
 
 				+ SSplitter::Slot()
-				.Value(0.25f)
+				.Value(0.46f)
 				.MinSize(LabelW)
 				[
 					SNew(SVerticalBox)
@@ -193,6 +197,8 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 						[
 							SNew(SQAACellBorder)
 							.Padding(FMargin(8.f, 5.f))
+							.BorderColor(FSlateColor(FLinearColor::Transparent))
+							.BackgroundColor(FSlateColor(EStyleColor::Recessed))
 							[
 								SNew(SSpacer)
 								.Size(FVector2D(1.f, 1.f))
@@ -208,7 +214,7 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 						.HeightOverride(TableRowH)
 						[
 							SNew(SQAACellBorder)
-							.Padding(FMargin(16.f, 5.f, 8.f, 5.f))
+							.Padding(FMargin(24.f, 5.f, 8.f, 5.f))
 							[
 								SNew(SBox)
 								.HAlign(HAlign_Fill)
@@ -216,7 +222,7 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 								[
 									SNew(STextBlock)
 									.Text(LOCTEXT("LocationHeader", "Location"))
-									.Font(FAppStyle::Get().GetFontStyle("NormalFontBold"))
+									.Font(PanelFont)
 									.MinDesiredWidth(LabelW)
 									.ToolTipText(LOCTEXT("Loc_TT", "Copy location from target"))
 								]
@@ -232,7 +238,7 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 						.HeightOverride(TableRowH)
 						[
 							SNew(SQAACellBorder)
-							.Padding(FMargin(16.f, 5.f, 8.f, 5.f))
+							.Padding(FMargin(24.f, 5.f, 8.f, 5.f))
 							[
 								SNew(SBox)
 								.HAlign(HAlign_Fill)
@@ -240,7 +246,7 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 								[
 									SNew(STextBlock)
 									.Text(LOCTEXT("RotationHeader", "Rotation"))
-									.Font(FAppStyle::Get().GetFontStyle("NormalFontBold"))
+									.Font(PanelFont)
 									.MinDesiredWidth(LabelW)
 									.ToolTipText(LOCTEXT("Rot_TT", "Copy rotation from target"))
 								]
@@ -256,7 +262,7 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 						.HeightOverride(TableRowH)
 						[
 							SNew(SQAACellBorder)
-							.Padding(FMargin(16.f, 5.f, 8.f, 5.f))
+							.Padding(FMargin(24.f, 5.f, 8.f, 5.f))
 							[
 								SNew(SBox)
 								.HAlign(HAlign_Fill)
@@ -264,7 +270,7 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 								[
 									SNew(STextBlock)
 									.Text(LOCTEXT("ScaleHeader", "Scale"))
-									.Font(FAppStyle::Get().GetFontStyle("NormalFontBold"))
+									.Font(PanelFont)
 									.MinDesiredWidth(LabelW)
 									.ToolTipText(LOCTEXT("Scale_TT", "Copy scale from target"))
 								]
@@ -293,10 +299,16 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 								.Padding(FMargin(8.f, 5.f))
 								.BackgroundColor(FSlateColor(EStyleColor::Header))
 								[
-									SNew(STextBlock)
-									.Text(FText::FromString("X"))
-									.ColorAndOpacity(FSlateColor::UseForeground())
-									.Justification(ETextJustify::Center)
+									SNew(SBox)
+									.HAlign(HAlign_Fill)
+									.VAlign(VAlign_Center)
+									[
+										SNew(STextBlock)
+										.Text(FText::FromString("X"))
+										.Font(PanelFont)
+										.ColorAndOpacity(FSlateColor::UseForeground())
+										.Justification(ETextJustify::Center)
+									]
 								]
 							]
 
@@ -307,10 +319,16 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 								.Padding(FMargin(8.f, 5.f))
 								.BackgroundColor(FSlateColor(EStyleColor::Header))
 								[
-									SNew(STextBlock)
-									.Text(FText::FromString("Y"))
-									.ColorAndOpacity(FSlateColor::UseForeground())
-									.Justification(ETextJustify::Center)
+									SNew(SBox)
+									.HAlign(HAlign_Fill)
+									.VAlign(VAlign_Center)
+									[
+										SNew(STextBlock)
+										.Text(FText::FromString("Y"))
+										.Font(PanelFont)
+										.ColorAndOpacity(FSlateColor::UseForeground())
+										.Justification(ETextJustify::Center)
+									]
 								]
 							]
 
@@ -321,10 +339,16 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 								.Padding(FMargin(8.f, 5.f))
 								.BackgroundColor(FSlateColor(EStyleColor::Header))
 								[
-									SNew(STextBlock)
-									.Text(FText::FromString("Z"))
-									.ColorAndOpacity(FSlateColor::UseForeground())
-									.Justification(ETextJustify::Center)
+									SNew(SBox)
+									.HAlign(HAlign_Fill)
+									.VAlign(VAlign_Center)
+									[
+										SNew(STextBlock)
+										.Text(FText::FromString("Z"))
+										.Font(PanelFont)
+										.ColorAndOpacity(FSlateColor::UseForeground())
+										.Justification(ETextJustify::Center)
+									]
 								]
 							]
 						]
@@ -387,7 +411,7 @@ void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 			[
 				SNew(STextBlock)
 				.Text(this, &SQuickAxisAlignPanel::GetFeedbackText)
-				.Font(FAppStyle::Get().GetFontStyle("SmallText"))
+				.Font(PanelFont)
 				.ColorAndOpacity(FLinearColor(0.2f, 0.6f, 0.2f))
 				.Visibility(this, &SQuickAxisAlignPanel::GetFeedbackVisibility)
 			]

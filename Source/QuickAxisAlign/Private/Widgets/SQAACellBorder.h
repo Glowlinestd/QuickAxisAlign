@@ -9,7 +9,7 @@ public:
 	SLATE_BEGIN_ARGS(SQAACellBorder)
 		: _BorderColor(FSlateColor(EStyleColor::Recessed))
 		, _BackgroundColor(FSlateColor(EStyleColor::Panel))
-		, _Thickness(0.75f)
+		, _Thickness(1.25f)
 		, _Padding(FMargin(8.f, 3.f))
 	{}
 		SLATE_ATTRIBUTE(FSlateColor, BorderColor)
