@@ -395,12 +395,20 @@
 			.AutoHeight()
 			.HAlign(HAlign_Left)
 			[
-				SNew(SButton)
-				.Text(LOCTEXT("ApplyButton", "Apply"))
-				.OnClicked(this, &SQuickAxisAlignPanel::OnApply)
-				.IsEnabled(this, &SQuickAxisAlignPanel::HasValidSelection)
-				.ButtonStyle(FAppStyle::Get(), "PrimaryButton")
-				.ToolTipText(LOCTEXT("ApplyTT", "Apply the selected transform channels from Target to Source"))
+				SNew(SBox)
+				.MinDesiredWidth(110.f)
+				.MinDesiredHeight(28.f)
+				[
+					SNew(SButton)
+					.Text(LOCTEXT("ApplyButton", "Apply"))
+					.OnClicked(this, &SQuickAxisAlignPanel::OnApply)
+					.IsEnabled(this, &SQuickAxisAlignPanel::HasValidSelection)
+					.ButtonStyle(FAppStyle::Get(), "PrimaryButton")
+					.ContentPadding(FMargin(20.f, 6.f))
+					.HAlign(HAlign_Center)
+					.VAlign(VAlign_Center)
+					.ToolTipText(LOCTEXT("ApplyTT", "Apply the selected transform channels from Target to Source"))
+				]
 			]
 
 			// ── Feedback ──────────────────────────────────────
