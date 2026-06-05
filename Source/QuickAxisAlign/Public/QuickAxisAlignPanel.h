@@ -15,6 +15,10 @@ private:
 	void OnActorSelectionChanged(UObject* InObject);
 	FReply OnApply();
 
+	FReply OnToggleLocationAxes();
+	FReply OnToggleRotationAxes();
+	FReply OnToggleScaleAxes();
+
 	FText GetSourceValueText() const;
 	FText GetTargetValueText() const;
 

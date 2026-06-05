@@ -215,6 +215,8 @@
 						[
 							SNew(SQAACellBorder)
 							.Padding(FMargin(24.f, 5.f, 8.f, 5.f))
+							.OnDoubleClick_Raw(this, &SQuickAxisAlignPanel::OnToggleLocationAxes)
+							.ToolTipText(LOCTEXT("Loc_TT", "Copy location from target\n\nDouble-click: toggle all 3 axes"))
 							[
 								SNew(SBox)
 								.HAlign(HAlign_Fill)
@@ -224,7 +226,6 @@
 									.Text(LOCTEXT("LocationHeader", "Location"))
 									.Font(PanelFont)
 									.MinDesiredWidth(LabelW)
-									.ToolTipText(LOCTEXT("Loc_TT", "Copy location from target"))
 								]
 							]
 						]
@@ -239,6 +240,8 @@
 						[
 							SNew(SQAACellBorder)
 							.Padding(FMargin(24.f, 5.f, 8.f, 5.f))
+							.OnDoubleClick_Raw(this, &SQuickAxisAlignPanel::OnToggleRotationAxes)
+							.ToolTipText(LOCTEXT("Rot_TT", "Copy rotation from target\n\nDouble-click: toggle all 3 axes"))
 							[
 								SNew(SBox)
 								.HAlign(HAlign_Fill)
@@ -248,7 +251,6 @@
 									.Text(LOCTEXT("RotationHeader", "Rotation"))
 									.Font(PanelFont)
 									.MinDesiredWidth(LabelW)
-									.ToolTipText(LOCTEXT("Rot_TT", "Copy rotation from target"))
 								]
 							]
 						]
@@ -263,6 +265,8 @@
 						[
 							SNew(SQAACellBorder)
 							.Padding(FMargin(24.f, 5.f, 8.f, 5.f))
+							.OnDoubleClick_Raw(this, &SQuickAxisAlignPanel::OnToggleScaleAxes)
+							.ToolTipText(LOCTEXT("Scale_TT", "Copy scale from target\n\nDouble-click: toggle all 3 axes"))
 							[
 								SNew(SBox)
 								.HAlign(HAlign_Fill)
@@ -272,7 +276,6 @@
 									.Text(LOCTEXT("ScaleHeader", "Scale"))
 									.Font(PanelFont)
 									.MinDesiredWidth(LabelW)
-									.ToolTipText(LOCTEXT("Scale_TT", "Copy scale from target"))
 								]
 							]
 						]
@@ -629,6 +632,32 @@ ECheckBoxState SQuickAxisAlignPanel::GetScaleYState() const
 ECheckBoxState SQuickAxisAlignPanel::GetScaleZState() const
 {
 	return bScaleZ ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+}
+
+// ── Row toggle (double-click on row label) ─────────────────
+
+FReply SQuickAxisAlignPanel::OnToggleLocationAxes()
+{
+	const bool bAllChecked = bPosX && bPosY && bPosZ;
+	const bool bNewState = !bAllChecked;
+	bPosX = bPosY = bPosZ = bNewState;
+	return FReply::Handled();
+}
+
+FReply SQuickAxisAlignPanel::OnToggleRotationAxes()
+{
+	const bool bAllChecked = bRotX && bRotY && bRotZ;
+	const bool bNewState = !bAllChecked;
+	bRotX = bRotY = bRotZ = bNewState;
+	return FReply::Handled();
+}
+
+FReply SQuickAxisAlignPanel::OnToggleScaleAxes()
+{
+	const bool bAllChecked = bScaleX && bScaleY && bScaleZ;
+	const bool bNewState = !bAllChecked;
+	bScaleX = bScaleY = bScaleZ = bNewState;
+	return FReply::Handled();
 }
 
 // ── Apply ──────────────────────────────────────────────────

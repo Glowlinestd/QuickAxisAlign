@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Widgets/SCompoundWidget.h"
+#include "Widgets/DeclarativeSyntaxSupport.h"
+#include "Framework/SlateDelegates.h"
 #include "Styling/SlateColor.h"
 
 class SQAACellBorder : public SCompoundWidget
@@ -16,6 +18,7 @@ public:
 		SLATE_ATTRIBUTE(FSlateColor, BackgroundColor)
 		SLATE_ATTRIBUTE(float, Thickness)
 		SLATE_ATTRIBUTE(FMargin, Padding)
+		SLATE_EVENT(FOnClicked, OnDoubleClick)
 		SLATE_DEFAULT_SLOT(FArguments, Content)
 	SLATE_END_ARGS()
 
@@ -30,8 +33,11 @@ public:
 		const FWidgetStyle& InWidgetStyle,
 		bool bParentEnabled) const override;
 
+	virtual FReply OnMouseButtonDoubleClick(const FGeometry& InMyGeometry, const FPointerEvent& InMouseEvent) override;
+
 private:
 	TAttribute<FSlateColor> BorderColor;
 	TAttribute<FSlateColor> BackgroundColor;
 	TAttribute<float> Thickness;
+	FOnClicked OnDoubleClickHandler;
 };

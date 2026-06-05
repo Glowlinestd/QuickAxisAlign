@@ -20,6 +20,7 @@ public class QuickAxisAlign : ModuleRules
 			{
 				"CoreUObject",
 				"Engine",
+				"InputCore",
 				"Slate",
 				"SlateCore",
 				"UnrealEd",

@@ -1,18 +1,35 @@
 #include "Widgets/SQAACellBorder.h"
 #include "Rendering/DrawElements.h"
 #include "Styling/AppStyle.h"
+#include "InputCoreTypes.h"
 
 void SQAACellBorder::Construct(const FArguments& InArgs)
 {
 	BorderColor = InArgs._BorderColor;
 	BackgroundColor = InArgs._BackgroundColor;
 	Thickness = InArgs._Thickness;
+	OnDoubleClickHandler = InArgs._OnDoubleClick;
 
 	ChildSlot
 	.Padding(InArgs._Padding)
 	[
 		InArgs._Content.Widget
 	];
+}
+
+FReply SQAACellBorder::OnMouseButtonDoubleClick(const FGeometry& InMyGeometry, const FPointerEvent& InMouseEvent)
+{
+	if (InMouseEvent.GetEffectingButton() != EKeys::LeftMouseButton)
+	{
+		return FReply::Unhandled();
+	}
+
+	if (OnDoubleClickHandler.IsBound())
+	{
+		return OnDoubleClickHandler.Execute();
+	}
+
+	return FReply::Unhandled();
 }
 
 int32 SQAACellBorder::OnPaint(
