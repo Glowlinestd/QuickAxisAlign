@@ -23,6 +23,7 @@ public class QuickAxisAlign : ModuleRules
 				"InputCore",
 				"Slate",
 				"SlateCore",
+				"EditorFramework",
 				"UnrealEd",
 				"LevelEditor",
 				"ToolMenus",

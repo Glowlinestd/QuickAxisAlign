@@ -4,18 +4,25 @@
 #include "QuickAxisAlignCommands.h"
 #include "QuickAxisAlignStyle.h"
 #include "QuickAxisAlignPanel.h"
+#include "QAAVisualAlignEdMode.h"
 
 #include "ToolMenus.h"
-#include "Engine/Selection.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Framework/Docking/TabManager.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/SWindow.h"
 #include "LevelEditor.h"
+#include "EditorModeManager.h"
+#include "EditorModeRegistry.h"
 
 #define LOCTEXT_NAMESPACE "FQuickAxisAlignModule"
 
 static const FName QuickAxisAlignTabName("QuickAxisAlign");
+
+FQuickAxisAlignModule& FQuickAxisAlignModule::Get()
+{
+	return FModuleManager::LoadModuleChecked<FQuickAxisAlignModule>("QuickAxisAlign");
+}
 
 void FQuickAxisAlignModule::StartupModule()
 {
@@ -33,6 +40,13 @@ void FQuickAxisAlignModule::StartupModule()
 
 	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FQuickAxisAlignModule::RegisterMenus));
 
+	FEditorModeRegistry::Get().RegisterMode<FQAAVisualAlignEdMode>(
+		FQAAVisualAlignEdMode::EM_QAAVisualAlignEdModeId,
+		LOCTEXT("QAAVisualAlignEdMode", "Visual Align"),
+		FSlateIcon(),
+		true
+	);
+
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(QuickAxisAlignTabName, FOnSpawnTab::CreateRaw(this, &FQuickAxisAlignModule::SpawnTab))
 		.SetDisplayName(LOCTEXT("QuickAxisAlignTabTitle", "Quick Axis Align"))
 		.SetTooltipText(LOCTEXT("QuickAxisAlignTabTooltip", "Align actors by copying coordinates."))
@@ -41,6 +55,8 @@ void FQuickAxisAlignModule::StartupModule()
 
 void FQuickAxisAlignModule::ShutdownModule()
 {
+	FEditorModeRegistry::Get().UnregisterMode(FQAAVisualAlignEdMode::EM_QAAVisualAlignEdModeId);
+
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(QuickAxisAlignTabName);
 
 	UToolMenus::UnRegisterStartupCallback(this);
@@ -92,6 +108,57 @@ void FQuickAxisAlignModule::RegisterMenus()
 void FQuickAxisAlignModule::AlignSelectedActors()
 {
 	FGlobalTabmanager::Get()->TryInvokeTab(QuickAxisAlignTabName);
+}
+
+namespace
+{
+	FEditorModeTools* GetModeManager()
+	{
+		if (!GLevelEditorModeToolsIsValid())
+		{
+			return nullptr;
+		}
+		return &GLevelEditorModeTools();
+	}
+}
+
+void FQuickAxisAlignModule::StartVisualAlignSession()
+{
+	FEditorModeTools* ModeTools = GetModeManager();
+	if (!ModeTools) return;
+
+	ModeTools->ActivateMode(FQAAVisualAlignEdMode::EM_QAAVisualAlignEdModeId);
+	FQAAVisualAlignEdMode* Mode = ModeTools->GetActiveModeTyped<FQAAVisualAlignEdMode>(FQAAVisualAlignEdMode::EM_QAAVisualAlignEdModeId);
+	if (Mode)
+	{
+		Mode->StartSession();
+	}
+}
+
+void FQuickAxisAlignModule::ApplyVisualAlign()
+{
+	FEditorModeTools* ModeTools = GetModeManager();
+	if (!ModeTools) return;
+
+	FQAAVisualAlignEdMode* Mode = ModeTools->GetActiveModeTyped<FQAAVisualAlignEdMode>(FQAAVisualAlignEdMode::EM_QAAVisualAlignEdModeId);
+	if (Mode)
+	{
+		Mode->ApplyAlignment();
+	}
+	ModeTools->DeactivateMode(FQAAVisualAlignEdMode::EM_QAAVisualAlignEdModeId);
+}
+
+void FQuickAxisAlignModule::CancelVisualAlign()
+{
+	FEditorModeTools* ModeTools = GetModeManager();
+	if (!ModeTools) return;
+
+	FQAAVisualAlignEdMode* Mode = ModeTools->GetActiveModeTyped<FQAAVisualAlignEdMode>(FQAAVisualAlignEdMode::EM_QAAVisualAlignEdModeId);
+	if (Mode)
+	{
+		Mode->CancelSession();
+	}
+	ModeTools->DeactivateMode(FQAAVisualAlignEdMode::EM_QAAVisualAlignEdModeId);
 }
 
 #undef LOCTEXT_NAMESPACE
