@@ -19,6 +19,7 @@ private:
 	FReply OnToggleRotationAxes();
 	FReply OnToggleScaleAxes();
 
+	FText GetSourceLabel() const;
 	FText GetSourceValueText() const;
 	FText GetTargetValueText() const;
 

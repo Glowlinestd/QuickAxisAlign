@@ -49,10 +49,9 @@
 					SNew(SBox)
 					.HAlign(HAlign_Center)
 					[
-						SNew(SCheckBox)
-						.ToolTipText(LOCTEXT("AxisX_TT", "Copy this axis"))
-						.IsChecked(this, GetX)
-						.OnCheckStateChanged(this, OnX)
+					SNew(SCheckBox)
+					.IsChecked(this, GetX)
+					.OnCheckStateChanged(this, OnX)
 					]
 				]
 			]
@@ -66,10 +65,9 @@
 					SNew(SBox)
 					.HAlign(HAlign_Center)
 					[
-						SNew(SCheckBox)
-						.ToolTipText(LOCTEXT("AxisY_TT", "Copy this axis"))
-						.IsChecked(this, GetY)
-						.OnCheckStateChanged(this, OnY)
+					SNew(SCheckBox)
+					.IsChecked(this, GetY)
+					.OnCheckStateChanged(this, OnY)
 					]
 				]
 			]
@@ -83,10 +81,9 @@
 					SNew(SBox)
 					.HAlign(HAlign_Center)
 					[
-						SNew(SCheckBox)
-						.ToolTipText(LOCTEXT("AxisZ_TT", "Copy this axis"))
-						.IsChecked(this, GetZ)
-						.OnCheckStateChanged(this, OnZ)
+					SNew(SCheckBox)
+					.IsChecked(this, GetZ)
+					.OnCheckStateChanged(this, OnZ)
 					]
 				]
 			]
@@ -124,7 +121,7 @@
 						.AutoWidth()
 						[
 						SNew(STextBlock)
-						.Text(LOCTEXT("SourceLabel", "Source"))
+						.Text(this, &SQuickAxisAlignPanel::GetSourceLabel)
 						.Font(PanelFont)
 						.ColorAndOpacity(FSlateColor::UseSubduedForeground())
 						]
@@ -410,7 +407,7 @@
 					.ContentPadding(FMargin(20.f, 6.f))
 					.HAlign(HAlign_Center)
 					.VAlign(VAlign_Center)
-					.ToolTipText(LOCTEXT("ApplyTT", "Apply the selected transform channels from Target to Source"))
+					.ToolTipText(LOCTEXT("ApplyTT", "Apply the selected transform channels from Target to all Sources"))
 				]
 			]
 
@@ -461,6 +458,16 @@ void SQuickAxisAlignPanel::OnActorSelectionChanged(UObject* InObject)
 
 // ── Source / Target labels ─────────────────────────────────
 
+FText SQuickAxisAlignPanel::GetSourceLabel() const
+{
+	if (!GEditor) return LOCTEXT("Source", "Source");
+
+	USelection* Sel = GEditor->GetSelectedActors();
+	if (!Sel) return LOCTEXT("Source", "Source");
+
+	return (Sel->Num() > 2) ? LOCTEXT("Sources", "Sources") : LOCTEXT("Source", "Source");
+}
+
 FText SQuickAxisAlignPanel::GetSourceValueText() const
 {
 	if (!GEditor) return FText::GetEmpty();
@@ -471,12 +478,20 @@ FText SQuickAxisAlignPanel::GetSourceValueText() const
 	TArray<AActor*> Actors;
 	Sel->GetSelectedObjects(Actors);
 
-	if (Actors.Num() >= 1)
+	if (Actors.Num() == 0)
 	{
-		FString Label = Actors[0]->GetActorLabel();
-		return FText::FromString(Label);
+		return LOCTEXT("NoneSelected", "—");
 	}
-	return LOCTEXT("NoneSelected", "—");
+
+	if (Actors.Num() <= 2)
+	{
+		return FText::FromString(Actors[0]->GetActorLabel());
+	}
+
+	return FText::Format(
+		LOCTEXT("SourcesCount", "{0} actors"),
+		FText::AsNumber(Actors.Num() - 1)
+	);
 }
 
 FText SQuickAxisAlignPanel::GetTargetValueText() const
@@ -491,8 +506,7 @@ FText SQuickAxisAlignPanel::GetTargetValueText() const
 
 	if (Actors.Num() >= 2)
 	{
-		FString Label = Actors[1]->GetActorLabel();
-		return FText::FromString(Label);
+		return FText::FromString(Actors.Last()->GetActorLabel());
 	}
 	return LOCTEXT("NoneSelected", "—");
 }
@@ -504,14 +518,9 @@ FText SQuickAxisAlignPanel::GetInstructionText() const
 	USelection* Sel = GEditor->GetSelectedActors();
 	if (!Sel) return FText::FromString(" ");
 
-	const int32 Num = Sel->Num();
-	if (Num == 0 || Num == 1)
+	if (Sel->Num() < 2)
 	{
-		return LOCTEXT("Instr_SelectTwo", "Select exactly 2 actors (Source first, then Target with Shift)");
-	}
-	if (Num > 2)
-	{
-		return LOCTEXT("Instr_TooMany", "Too many selected — deselect and pick only 2 actors");
+		return LOCTEXT("Instr_SelectTwoPlus", "Select 2+ actors in the viewport (last selected = Target)");
 	}
 	return FText::FromString(" ");
 }
@@ -523,7 +532,7 @@ bool SQuickAxisAlignPanel::HasValidSelection() const
 	USelection* Sel = GEditor->GetSelectedActors();
 	if (!Sel) return false;
 
-	return Sel->Num() == 2;
+	return Sel->Num() >= 2;
 }
 
 // ── Feedback ───────────────────────────────────────────────
@@ -668,50 +677,73 @@ FReply SQuickAxisAlignPanel::OnApply()
 		return FReply::Handled();
 
 	USelection* Selection = GEditor->GetSelectedActors();
-	if (!Selection || Selection->Num() != 2)
+	if (!Selection || Selection->Num() < 2)
 		return FReply::Handled();
 
 	TArray<AActor*> SelectedActors;
 	Selection->GetSelectedObjects(SelectedActors);
 
-	AActor* Source = SelectedActors[0];
-	AActor* Target = SelectedActors[1];
-
-	const FVector SourceLoc = Source->GetActorLocation();
-	const FRotator SourceRot = Source->GetActorRotation();
-	const FVector SourceScale = Source->GetActorScale3D();
+	AActor* Target = SelectedActors.Last();
+	const int32 SourceCount = SelectedActors.Num() - 1;
 
 	const FVector TargetLoc = Target->GetActorLocation();
 	const FRotator TargetRot = Target->GetActorRotation();
 	const FVector TargetScale = Target->GetActorScale3D();
 
-	FVector NewLoc = SourceLoc;
-	FRotator NewRot = SourceRot;
-	FVector NewScale = SourceScale;
+	const FScopedTransaction Transaction(
+		SourceCount > 1
+			? LOCTEXT("AlignMultiTransaction", "Quick Axis Align (Multi)")
+			: LOCTEXT("AlignTransaction", "Quick Axis Align")
+	);
 
-	if (bPosX) NewLoc.X = TargetLoc.X;
-	if (bPosY) NewLoc.Y = TargetLoc.Y;
-	if (bPosZ) NewLoc.Z = TargetLoc.Z;
+	for (int32 i = 0; i < SourceCount; ++i)
+	{
+		AActor* Source = SelectedActors[i];
 
-	if (bRotX) NewRot.Roll = TargetRot.Roll;
-	if (bRotY) NewRot.Pitch = TargetRot.Pitch;
-	if (bRotZ) NewRot.Yaw = TargetRot.Yaw;
+		const FVector SourceLoc = Source->GetActorLocation();
+		const FRotator SourceRot = Source->GetActorRotation();
+		const FVector SourceScale = Source->GetActorScale3D();
 
-	if (bScaleX) NewScale.X = TargetScale.X;
-	if (bScaleY) NewScale.Y = TargetScale.Y;
-	if (bScaleZ) NewScale.Z = TargetScale.Z;
+		FVector NewLoc = SourceLoc;
+		FRotator NewRot = SourceRot;
+		FVector NewScale = SourceScale;
 
-	const FScopedTransaction Transaction(LOCTEXT("AlignTransaction", "Quick Axis Align"));
-	Source->Modify();
+		if (bPosX) NewLoc.X = TargetLoc.X;
+		if (bPosY) NewLoc.Y = TargetLoc.Y;
+		if (bPosZ) NewLoc.Z = TargetLoc.Z;
 
-	if (NewLoc != SourceLoc)
-		Source->SetActorLocation(NewLoc, false);
-	if (NewRot != SourceRot)
-		Source->SetActorRotation(NewRot);
-	if (NewScale != SourceScale)
-		Source->SetActorScale3D(NewScale);
+		if (bRotX) NewRot.Roll = TargetRot.Roll;
+		if (bRotY) NewRot.Pitch = TargetRot.Pitch;
+		if (bRotZ) NewRot.Yaw = TargetRot.Yaw;
 
-	FeedbackText = FText::Format(LOCTEXT("AppliedFeedback", "Applied to {0}"), FText::FromString(Source->GetActorLabel()));
+		if (bScaleX) NewScale.X = TargetScale.X;
+		if (bScaleY) NewScale.Y = TargetScale.Y;
+		if (bScaleZ) NewScale.Z = TargetScale.Z;
+
+		Source->Modify();
+
+		if (NewLoc != SourceLoc)
+			Source->SetActorLocation(NewLoc, false);
+		if (NewRot != SourceRot)
+			Source->SetActorRotation(NewRot);
+		if (NewScale != SourceScale)
+			Source->SetActorScale3D(NewScale);
+	}
+
+	if (SourceCount == 1)
+	{
+		FeedbackText = FText::Format(
+			LOCTEXT("AppliedFeedbackSingle", "Applied to {0}"),
+			FText::FromString(SelectedActors[0]->GetActorLabel())
+		);
+	}
+	else
+	{
+		FeedbackText = FText::Format(
+			LOCTEXT("AppliedFeedbackMulti", "Applied to {0} actors"),
+			FText::AsNumber(SourceCount)
+		);
+	}
 
 	GEditor->SelectActor(Target, false, true);
 
