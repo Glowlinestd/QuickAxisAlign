@@ -22,6 +22,7 @@ private:
 	FText GetSourceLabel() const;
 	FText GetSourceValueText() const;
 	FText GetTargetValueText() const;
+	FText GetSelectionTooltipText() const;
 
 	FText GetInstructionText() const;
 	bool HasValidSelection() const;

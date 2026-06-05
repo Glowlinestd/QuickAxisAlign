@@ -108,7 +108,7 @@
 				.BorderImage(FAppStyle::Get().GetBrush("WhiteBrush"))
 				.BorderBackgroundColor(FSlateColor(EStyleColor::Background))
 				.Padding(FMargin(8, 6))
-				.ToolTipText(this, &SQuickAxisAlignPanel::GetInstructionText)
+				.ToolTipText(this, &SQuickAxisAlignPanel::GetSelectionTooltipText)
 				[
 					SNew(SVerticalBox)
 
@@ -509,6 +509,60 @@ FText SQuickAxisAlignPanel::GetTargetValueText() const
 		return FText::FromString(Actors.Last()->GetActorLabel());
 	}
 	return LOCTEXT("NoneSelected", "—");
+}
+
+FText SQuickAxisAlignPanel::GetSelectionTooltipText() const
+{
+	if (!GEditor) return FText::GetEmpty();
+
+	USelection* Sel = GEditor->GetSelectedActors();
+	if (!Sel) return FText::GetEmpty();
+
+	TArray<AActor*> Actors;
+	Sel->GetSelectedObjects(Actors);
+
+	if (Actors.Num() == 0)
+	{
+		return LOCTEXT("TT_NoSelection", "No actors selected");
+	}
+
+	if (Actors.Num() == 1)
+	{
+		return FText::Format(
+			LOCTEXT("TT_OneActor", "Source: {0}"),
+			FText::FromString(Actors[0]->GetActorLabel())
+		);
+	}
+
+	if (Actors.Num() == 2)
+	{
+		return FText::Format(
+			LOCTEXT("TT_TwoActors", "Source: {0}, Target: {1}"),
+			FText::FromString(Actors[0]->GetActorLabel()),
+			FText::FromString(Actors[1]->GetActorLabel())
+		);
+	}
+
+	TArray<FString> AllLabels;
+	AllLabels.Reserve(Actors.Num());
+	for (AActor* A : Actors)
+	{
+		AllLabels.Add(A->GetActorLabel());
+	}
+
+	FString SourceList;
+	for (int32 i = 0; i < AllLabels.Num() - 1; ++i)
+	{
+		if (i > 0) SourceList += TEXT(", ");
+		SourceList += AllLabels[i];
+	}
+	const FString TargetLabel = AllLabels.Last();
+
+	return FText::Format(
+		LOCTEXT("TT_MultiActors", "Sources: {0}\nTarget: {1}"),
+		FText::FromString(SourceList),
+		FText::FromString(TargetLabel)
+	);
 }
 
 FText SQuickAxisAlignPanel::GetInstructionText() const
