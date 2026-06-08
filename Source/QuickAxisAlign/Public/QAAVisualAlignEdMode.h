@@ -45,10 +45,11 @@ public:
 	EQAAVisualAlignStep GetStep() const { return Step; }
 
 private:
-	bool TryGetActorAndPointUnderCursor(FEditorViewportClient* ViewportClient, int32 MouseX, int32 MouseY, AActor*& OutActor, FVector& OutWorldPoint) const;
+	bool TryGetActorAndPointUnderCursor(FEditorViewportClient* ViewportClient, int32 MouseX, int32 MouseY, AActor*& OutActor, FVector& OutWorldPoint, FVector& OutNormal) const;
 	void SelectPickedActor(AActor* Actor) const;
-	void DrawMarker(FPrimitiveDrawInterface* PDI, const FVector& WorldPos, const FLinearColor& Color) const;
-	void DrawArrow(FPrimitiveDrawInterface* PDI, const FVector& From, const FVector& To, const FLinearColor& Color) const;
+	void DrawSmallArrow(FPrimitiveDrawInterface* PDI, const FVector& Base, const FVector& Direction, const FLinearColor& Color) const;
+	void DrawConnectCurve(FPrimitiveDrawInterface* PDI, const FVector& From, const FVector& To, const FVector& FromNormal, const FVector& ToNormal, const FLinearColor& Color) const;
+	void DrawArrowHead(FPrimitiveDrawInterface* PDI, const FVector& Tip, const FVector& Direction, const FLinearColor& Color) const;
 
 	EQAAVisualAlignStep Step;
 
@@ -59,6 +60,8 @@ private:
 	bool bHasTargetPoint;
 	FVector SourcePoint;
 	FVector TargetPoint;
+	FVector SourceNormal;
+	FVector TargetNormal;
 
 	bool bHoverValid;
 

@@ -22,7 +22,9 @@ const FEditorModeID FQAAVisualAlignEdMode::EM_QAAVisualAlignEdModeId(
 namespace
 {
 	constexpr float MarkerRadius = 12.0f;
-	constexpr int32 MarkerSegments = 16;
+	constexpr float ArrowLength = 50.0f;
+	constexpr float ArrowThickness = 2.0f;
+	constexpr int32 CurveSegments = 32;
 
 	// Slab-method ray vs AABB intersection. Returns true and fills OutHit
 	// with the entry point on the box if the ray starting at Origin and
@@ -74,6 +76,8 @@ FQAAVisualAlignEdMode::FQAAVisualAlignEdMode()
 	: Step(EQAAVisualAlignStep::Inactive)
 	, bHasSourcePoint(false)
 	, bHasTargetPoint(false)
+	, SourceNormal(FVector::ZeroVector)
+	, TargetNormal(FVector::ZeroVector)
 	, bHoverValid(false)
 	, LastMouseX(0)
 	, LastMouseY(0)
@@ -86,6 +90,8 @@ void FQAAVisualAlignEdMode::Enter()
 	Step = EQAAVisualAlignStep::Inactive;
 	bHasSourcePoint = false;
 	bHasTargetPoint = false;
+	SourceNormal = FVector::ZeroVector;
+	TargetNormal = FVector::ZeroVector;
 	bHoverValid = false;
 }
 
@@ -96,6 +102,8 @@ void FQAAVisualAlignEdMode::Exit()
 	bHasTargetPoint = false;
 	Source.Reset();
 	Target.Reset();
+	SourceNormal = FVector::ZeroVector;
+	TargetNormal = FVector::ZeroVector;
 	FEdMode::Exit();
 }
 
@@ -105,6 +113,8 @@ void FQAAVisualAlignEdMode::StartSession()
 	Target.Reset();
 	bHasSourcePoint = false;
 	bHasTargetPoint = false;
+	SourceNormal = FVector::ZeroVector;
+	TargetNormal = FVector::ZeroVector;
 	Step = EQAAVisualAlignStep::WaitingForSource;
 	bHoverValid = false;
 }
@@ -116,6 +126,8 @@ void FQAAVisualAlignEdMode::CancelSession()
 	bHasTargetPoint = false;
 	Source.Reset();
 	Target.Reset();
+	SourceNormal = FVector::ZeroVector;
+	TargetNormal = FVector::ZeroVector;
 	bHoverValid = false;
 }
 
@@ -147,6 +159,8 @@ bool FQAAVisualAlignEdMode::ApplyAlignment()
 	bHasTargetPoint = false;
 	Source.Reset();
 	Target.Reset();
+	SourceNormal = FVector::ZeroVector;
+	TargetNormal = FVector::ZeroVector;
 	bHoverValid = false;
 	return true;
 }
@@ -165,7 +179,8 @@ bool FQAAVisualAlignEdMode::MouseMove(FEditorViewportClient* ViewportClient, FVi
 	{
 		AActor* Hovered = nullptr;
 		FVector WorldPoint;
-		bHoverValid = TryGetActorAndPointUnderCursor(ViewportClient, x, y, Hovered, WorldPoint) && Hovered != nullptr;
+		FVector WorldNormal;
+		bHoverValid = TryGetActorAndPointUnderCursor(ViewportClient, x, y, Hovered, WorldPoint, WorldNormal) && Hovered != nullptr;
 		return true;
 	}
 	bHoverValid = false;
@@ -204,7 +219,8 @@ bool FQAAVisualAlignEdMode::HandleClick(FEditorViewportClient* InViewportClient,
 
 	AActor* PickedActor = nullptr;
 	FVector PickedPoint;
-	if (!TryGetActorAndPointUnderCursor(InViewportClient, MouseX, MouseY, PickedActor, PickedPoint) || !PickedActor)
+	FVector PickedNormal;
+	if (!TryGetActorAndPointUnderCursor(InViewportClient, MouseX, MouseY, PickedActor, PickedPoint, PickedNormal) || !PickedActor)
 	{
 		return true;
 	}
@@ -215,6 +231,7 @@ bool FQAAVisualAlignEdMode::HandleClick(FEditorViewportClient* InViewportClient,
 	{
 		Source = PickedActor;
 		SourcePoint = PickedPoint;
+		SourceNormal = PickedNormal;
 		bHasSourcePoint = true;
 		Step = EQAAVisualAlignStep::WaitingForTarget;
 	}
@@ -222,6 +239,7 @@ bool FQAAVisualAlignEdMode::HandleClick(FEditorViewportClient* InViewportClient,
 	{
 		Target = PickedActor;
 		TargetPoint = PickedPoint;
+		TargetNormal = PickedNormal;
 		bHasTargetPoint = true;
 		Step = EQAAVisualAlignStep::ReadyToApply;
 	}
@@ -251,7 +269,7 @@ bool FQAAVisualAlignEdMode::InputKey(FEditorViewportClient* ViewportClient, FVie
 	return false;
 }
 
-bool FQAAVisualAlignEdMode::TryGetActorAndPointUnderCursor(FEditorViewportClient* ViewportClient, int32 MouseX, int32 MouseY, AActor*& OutActor, FVector& OutWorldPoint) const
+bool FQAAVisualAlignEdMode::TryGetActorAndPointUnderCursor(FEditorViewportClient* ViewportClient, int32 MouseX, int32 MouseY, AActor*& OutActor, FVector& OutWorldPoint, FVector& OutNormal) const
 {
 	OutActor = nullptr;
 
@@ -323,6 +341,7 @@ bool FQAAVisualAlignEdMode::TryGetActorAndPointUnderCursor(FEditorViewportClient
 		if (bHit && Hit.GetActor() == Hovered)
 		{
 			OutWorldPoint = Hit.ImpactPoint;
+			OutNormal = Hit.ImpactNormal;
 			return true;
 		}
 	}
@@ -330,6 +349,7 @@ bool FQAAVisualAlignEdMode::TryGetActorAndPointUnderCursor(FEditorViewportClient
 	// 3) Fallback: ray vs component bounds.
 	float BestDist = TNumericLimits<float>::Max();
 	FVector BestPoint = FVector::ZeroVector;
+	FVector BestNormal = FVector::ZeroVector;
 	bool bFound = false;
 
 	TArray<UPrimitiveComponent*> Prims;
@@ -349,6 +369,7 @@ bool FQAAVisualAlignEdMode::TryGetActorAndPointUnderCursor(FEditorViewportClient
 			{
 				BestDist = Dist;
 				BestPoint = HitOnBox;
+				BestNormal = (HitOnBox - B.Origin).GetSafeNormal();
 				bFound = true;
 			}
 		}
@@ -364,6 +385,7 @@ bool FQAAVisualAlignEdMode::TryGetActorAndPointUnderCursor(FEditorViewportClient
 		if (RayIntersectsAABBCenterExtents(RayOrigin, RayDir, B.Origin, B.BoxExtent, HitOnBox))
 		{
 			BestPoint = HitOnBox;
+			BestNormal = (HitOnBox - B.Origin).GetSafeNormal();
 			bFound = true;
 		}
 	}
@@ -371,6 +393,7 @@ bool FQAAVisualAlignEdMode::TryGetActorAndPointUnderCursor(FEditorViewportClient
 	if (bFound)
 	{
 		OutWorldPoint = BestPoint;
+		OutNormal = BestNormal;
 		return true;
 	}
 
@@ -389,55 +412,108 @@ void FQAAVisualAlignEdMode::SelectPickedActor(AActor* Actor) const
 	GEditor->SelectActor(Actor, /*bInSelected*/ true, /*bNotify*/ true, /*bSelectEvenIfHidden*/ true);
 }
 
-void FQAAVisualAlignEdMode::DrawMarker(FPrimitiveDrawInterface* PDI, const FVector& WorldPos, const FLinearColor& Color) const
-{
-	DrawWireSphere(PDI, WorldPos, FLinearColor::White, MarkerRadius, MarkerSegments, SDPG_Foreground);
-	DrawWireSphere(PDI, WorldPos, Color, MarkerRadius * 0.7f, MarkerSegments, SDPG_Foreground);
-	DrawCircle(PDI, WorldPos, FVector::ForwardVector, FVector::RightVector, Color, MarkerRadius * 0.5f, MarkerSegments, SDPG_Foreground);
-	DrawCircle(PDI, WorldPos, FVector::RightVector, FVector::UpVector, Color, MarkerRadius * 0.5f, MarkerSegments, SDPG_Foreground);
-	DrawCircle(PDI, WorldPos, FVector::UpVector, FVector::ForwardVector, Color, MarkerRadius * 0.5f, MarkerSegments, SDPG_Foreground);
-}
 
-void FQAAVisualAlignEdMode::DrawArrow(FPrimitiveDrawInterface* PDI, const FVector& From, const FVector& To, const FLinearColor& Color) const
-{
-	PDI->DrawLine(From, To, Color, SDPG_Foreground, 2.0f);
 
-	const FVector Dir = (To - From).GetSafeNormal();
+void FQAAVisualAlignEdMode::DrawSmallArrow(FPrimitiveDrawInterface* PDI, const FVector& Base, const FVector& Direction, const FLinearColor& Color) const
+{
+	const FVector Dir = Direction.GetSafeNormal();
 	if (Dir.IsNearlyZero())
 	{
 		return;
 	}
-	const FVector Right = FVector::CrossProduct(Dir, FVector::UpVector).GetSafeNormal();
-	if (Right.IsNearlyZero())
+
+	const FVector Tip = Base + Dir * ArrowLength;
+	PDI->DrawLine(Base, Tip, Color, SDPG_Foreground, ArrowThickness);
+	DrawArrowHead(PDI, Tip, Dir, Color);
+}
+
+void FQAAVisualAlignEdMode::DrawConnectCurve(FPrimitiveDrawInterface* PDI, const FVector& From, const FVector& To, const FVector& FromNormal, const FVector& ToNormal, const FLinearColor& Color) const
+{
+	const FVector Delta = To - From;
+	const float Distance = Delta.Size();
+	if (Distance < 1.0f)
 	{
 		return;
 	}
-	const FVector Up = FVector::CrossProduct(Right, Dir).GetSafeNormal();
 
-	const float HeadLen = MarkerRadius * 1.5f;
-	const float HeadRad = MarkerRadius * 0.7f;
-	const FVector HeadBase = To - Dir * HeadLen;
-	PDI->DrawLine(To, HeadBase + Right * HeadRad, Color, SDPG_Foreground, 2.0f);
-	PDI->DrawLine(To, HeadBase - Right * HeadRad, Color, SDPG_Foreground, 2.0f);
-	PDI->DrawLine(To, HeadBase + Up * HeadRad, Color, SDPG_Foreground, 2.0f);
-	PDI->DrawLine(To, HeadBase - Up * HeadRad, Color, SDPG_Foreground, 2.0f);
+	const FVector MidDir = Delta / Distance;
+
+	const FVector AvgNormal = (FromNormal + ToNormal).GetSafeNormal();
+	FVector ArcNormal = FVector::CrossProduct(MidDir, AvgNormal).GetSafeNormal();
+	if (ArcNormal.IsNearlyZero())
+	{
+		ArcNormal = FVector::CrossProduct(MidDir, FVector::UpVector).GetSafeNormal();
+	}
+	if (ArcNormal.IsNearlyZero())
+	{
+		return;
+	}
+
+	const float TangentLen = FMath::Min(Distance * 0.3f, ArrowLength * 2.0f);
+	const float ArcOffset = FMath::Clamp(Distance * 0.22f, 30.0f, 150.0f);
+
+	const FVector ControlA = From + FromNormal * TangentLen + ArcNormal * ArcOffset;
+	const FVector ControlB = To + ToNormal * TangentLen + ArcNormal * ArcOffset;
+
+	FVector Prev = From;
+	for (int32 i = 1; i <= CurveSegments; ++i)
+	{
+		const float T = static_cast<float>(i) / static_cast<float>(CurveSegments);
+		const float U = 1.0f - T;
+		const FVector Point = U * U * U * From
+			+ 3.0f * U * U * T * ControlA
+			+ 3.0f * U * T * T * ControlB
+			+ T * T * T * To;
+		PDI->DrawLine(Prev, Point, Color, SDPG_Foreground, ArrowThickness);
+		Prev = Point;
+	}
+}
+
+void FQAAVisualAlignEdMode::DrawArrowHead(FPrimitiveDrawInterface* PDI, const FVector& Tip, const FVector& Direction, const FLinearColor& Color) const
+{
+	if (Direction.IsNearlyZero())
+	{
+		return;
+	}
+
+	FVector Right = FVector::CrossProduct(Direction, FVector::UpVector).GetSafeNormal();
+	if (Right.IsNearlyZero())
+	{
+		Right = FVector::CrossProduct(Direction, FVector::ForwardVector).GetSafeNormal();
+	}
+	const FVector Up = FVector::CrossProduct(Right, Direction).GetSafeNormal();
+
+	const float HeadLen = MarkerRadius * 1.8f;
+	const float HeadRad = MarkerRadius * 0.8f;
+	const FVector HeadBase = Tip - Direction * HeadLen;
+
+	PDI->DrawLine(Tip, HeadBase + Right * HeadRad, Color, SDPG_Foreground, 2.0f);
+	PDI->DrawLine(Tip, HeadBase - Right * HeadRad, Color, SDPG_Foreground, 2.0f);
+	PDI->DrawLine(Tip, HeadBase + Up * HeadRad, Color, SDPG_Foreground, 2.0f);
+	PDI->DrawLine(Tip, HeadBase - Up * HeadRad, Color, SDPG_Foreground, 2.0f);
 }
 
 void FQAAVisualAlignEdMode::Render(const FSceneView* View, FViewport* Viewport, FPrimitiveDrawInterface* PDI)
 {
 	FEdMode::Render(View, Viewport, PDI);
 
+	const FLinearColor ArrowColor(0.0f, 0.4f, 1.0f, 1.0f);
+
 	if (bHasSourcePoint)
 	{
-		DrawMarker(PDI, SourcePoint, FLinearColor(0.0f, 1.0f, 0.0f, 1.0f));
+		DrawSmallArrow(PDI, SourcePoint, SourceNormal, ArrowColor);
 	}
+
 	if (bHasTargetPoint)
 	{
-		DrawMarker(PDI, TargetPoint, FLinearColor(0.0f, 0.5f, 1.0f, 1.0f));
+		DrawSmallArrow(PDI, TargetPoint, TargetNormal, ArrowColor);
 	}
+
 	if (bHasSourcePoint && bHasTargetPoint)
 	{
-		DrawArrow(PDI, SourcePoint, TargetPoint, FLinearColor(1.0f, 0.7f, 0.0f, 1.0f));
+		const FVector SourceTip = SourcePoint + SourceNormal * ArrowLength;
+		const FVector TargetTip = TargetPoint + TargetNormal * ArrowLength;
+		DrawConnectCurve(PDI, SourceTip, TargetTip, SourceNormal, TargetNormal, ArrowColor);
 	}
 }
 
