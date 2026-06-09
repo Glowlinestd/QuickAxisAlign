@@ -1,14 +1,17 @@
 #include "QuickAxisAlignPanel.h"
 #include "QuickAxisAlign.h"
+#include "QuickAxisAlignStyle.h"
 #include "QAAVisualAlignEdMode.h"
 
 #include "Widgets/SQAACellBorder.h"
 
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SBox.h"
+#include "Widgets/Layout/SSeparator.h"
 #include "Widgets/Layout/SSplitter.h"
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/Input/SCheckBox.h"
+#include "Widgets/Images/SImage.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Text/STextBlock.h"
 #include "Styling/AppStyle.h"
@@ -121,7 +124,7 @@ namespace
 			[
 				SNew(SBorder)
 				.BorderImage(FAppStyle::Get().GetBrush("WhiteBrush"))
-				.BorderBackgroundColor(FSlateColor(EStyleColor::Background))
+				.BorderBackgroundColor(FSlateColor(EStyleColor::Input))
 				.Padding(FMargin(8, 6))
 				.ToolTipText(this, &SQuickAxisAlignPanel::GetSelectionTooltipText)
 				[
@@ -174,22 +177,10 @@ namespace
 				]
 			]
 
-			// ── Instruction (always visible, keeps height) ───
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			.Padding(0, 0, 0, 6)
-			[
-				SNew(STextBlock)
-				.Text(this, &SQuickAxisAlignPanel::GetInstructionText)
-				.Font(PanelFont)
-				.ColorAndOpacity(FSlateColor::UseSubduedForeground())
-				.Visibility(EVisibility::SelfHitTestInvisible)
-			]
-
 			// ── Table: Location / Rotation / Scale ──────────
 			+ SVerticalBox::Slot()
 			.AutoHeight()
-			.Padding(0, 0, 0, 4)
+			.Padding(0, 8, 0, 4)
 			[
 				SNew(SSplitter)
 				.PhysicalSplitterHandleSize(1.25f)
@@ -405,118 +396,69 @@ namespace
 			+ SVerticalBox::Slot()
 			.FillHeight(1.f)
 
-			// ── Visual Align ─────────────────────────────────
+			// ── Bottom bar ─────────────────────────────────────────
 			+ SVerticalBox::Slot()
 			.AutoHeight()
-			.Padding(0, 6, 0, 0)
 			[
-				SNew(SBorder)
-				.BorderImage(FAppStyle::Get().GetBrush("WhiteBrush"))
-				.BorderBackgroundColor(FSlateColor(EStyleColor::Background))
-				.Padding(FMargin(8, 6))
+				SNew(SHorizontalBox)
+
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.VAlign(VAlign_Center)
+				.Padding(8, 0, 8, 4)
 				[
-					SNew(SVerticalBox)
+					SNew(STextBlock)
+					.Text(this, &SQuickAxisAlignPanel::GetInfoText)
+					.Font(PanelFont)
+					.ColorAndOpacity(this, &SQuickAxisAlignPanel::GetInfoColor)
+					.Visibility(this, &SQuickAxisAlignPanel::GetInfoVisibility)
+				]
 
-					// Header
-					+ SVerticalBox::Slot()
-					.AutoHeight()
-					.Padding(0, 0, 0, 4)
-					[
-						SNew(STextBlock)
-						.Text(LOCTEXT("VisualAlignHeader", "Visual Align"))
-						.Font(FAppStyle::Get().GetFontStyle("NormalFontBold"))
-					]
+				+ SHorizontalBox::Slot()
+				.FillWidth(1.f)
 
-					// Status line
-					+ SVerticalBox::Slot()
-					.AutoHeight()
-					.Padding(0, 0, 0, 4)
-					[
-						SNew(STextBlock)
-						.Text(this, &SQuickAxisAlignPanel::GetVisualAlignStatus)
-						.Font(PanelFont)
-						.ColorAndOpacity(FSlateColor::UseSubduedForeground())
-					]
-
-					// Buttons row
-					+ SVerticalBox::Slot()
-					.AutoHeight()
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.VAlign(VAlign_Center)
+				[
+					SNew(SButton)
+					.ContentPadding(FMargin(10.f, 4.f))
+					.OnClicked(this, &SQuickAxisAlignPanel::OnStartVisualAlign)
+					.IsEnabled(this, &SQuickAxisAlignPanel::IsVisualAlignInactive)
+					.ToolTipText(LOCTEXT("StartVisualAlignTT", "Enter Visual Align mode: click on a point of the Source, then a point of the Target"))
 					[
 						SNew(SHorizontalBox)
 
 						+ SHorizontalBox::Slot()
 						.AutoWidth()
-						.Padding(0, 0, 6, 0)
+						.VAlign(VAlign_Center)
 						[
-							SNew(SBox)
-							.MinDesiredWidth(100.f)
-							.MinDesiredHeight(26.f)
-							[
-								SNew(SButton)
-								.Text(LOCTEXT("StartVisualAlign", "Use Visual Align"))
-								.HAlign(HAlign_Center)
-								.VAlign(VAlign_Center)
-								.ContentPadding(FMargin(12.f, 4.f))
-								.OnClicked(this, &SQuickAxisAlignPanel::OnStartVisualAlign)
-								.IsEnabled(this, &SQuickAxisAlignPanel::IsVisualAlignInactive)
-								.ToolTipText(LOCTEXT("StartVisualAlignTT", "Enter Visual Align mode: click on a point of the Source, then a point of the Target"))
-							]
+							SNew(SImage)
+							.Image(FQuickAxisAlignStyle::GetBrush("QuickAxisAlign.AlignActors"))
+							.DesiredSizeOverride(FVector2D(16.f, 16.f))
 						]
 
 						+ SHorizontalBox::Slot()
 						.AutoWidth()
-						.Padding(0, 0, 6, 0)
+						.VAlign(VAlign_Center)
+						.Padding(FMargin(6.f, 0.f, 0.f, 0.f))
 						[
-							SNew(SBox)
-							.MinDesiredWidth(100.f)
-							.MinDesiredHeight(26.f)
-							[
-								SNew(SButton)
-								.Text(LOCTEXT("ApplyVisualAlign", "Apply"))
-								.HAlign(HAlign_Center)
-								.VAlign(VAlign_Center)
-								.ContentPadding(FMargin(12.f, 4.f))
-								.ButtonStyle(FAppStyle::Get(), "PrimaryButton")
-								.OnClicked(this, &SQuickAxisAlignPanel::OnApplyVisualAlign)
-								.IsEnabled(this, &SQuickAxisAlignPanel::IsVisualAlignReady)
-								.ToolTipText(LOCTEXT("ApplyVisualAlignTT", "Move sources so source point matches target point"))
-							]
-						]
-
-						+ SHorizontalBox::Slot()
-						.AutoWidth()
-						[
-							SNew(SBox)
-							.MinDesiredWidth(100.f)
-							.MinDesiredHeight(26.f)
-							[
-								SNew(SButton)
-								.Text(LOCTEXT("CancelVisualAlign", "Cancel"))
-								.HAlign(HAlign_Center)
-								.VAlign(VAlign_Center)
-								.ContentPadding(FMargin(12.f, 4.f))
-								.OnClicked(this, &SQuickAxisAlignPanel::OnCancelVisualAlign)
-								.IsEnabled(this, &SQuickAxisAlignPanel::IsVisualAlignActive)
-								.ToolTipText(LOCTEXT("CancelVisualAlignTT", "Exit Visual Align mode"))
-							]
+							SNew(STextBlock)
+							.Text(LOCTEXT("StartVisualAlign", "Visual Align"))
+							.Font(FAppStyle::Get().GetFontStyle("NormalText"))
 						]
 					]
 				]
-			]
 
-			// ── Apply ─────────────────────────────────────────
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			.HAlign(HAlign_Left)
-			[
-				SNew(SBox)
-				.MinDesiredWidth(110.f)
-				.MinDesiredHeight(28.f)
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.VAlign(VAlign_Center)
+				.Padding(0, 0, 8, 4)
 				[
 					SNew(SButton)
 					.Text(LOCTEXT("ApplyButton", "Apply"))
 					.OnClicked(this, &SQuickAxisAlignPanel::OnApply)
-					.IsEnabled(this, &SQuickAxisAlignPanel::HasValidSelection)
+					.IsEnabled(TAttribute<bool>::CreateLambda([this]() { return HasValidSelection() || IsVisualAlignReady(); }))
 					.ButtonStyle(FAppStyle::Get(), "PrimaryButton")
 					.ContentPadding(FMargin(20.f, 6.f))
 					.HAlign(HAlign_Center)
@@ -524,21 +466,9 @@ namespace
 					.ToolTipText(LOCTEXT("ApplyTT", "Apply the selected transform channels from Target to all Sources"))
 				]
 			]
-
-			// ── Feedback ──────────────────────────────────────
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			.Padding(0, 4, 0, 0)
-			.HAlign(HAlign_Center)
-			[
-				SNew(STextBlock)
-				.Text(this, &SQuickAxisAlignPanel::GetFeedbackText)
-				.Font(PanelFont)
-				.ColorAndOpacity(FLinearColor(0.2f, 0.6f, 0.2f))
-				.Visibility(this, &SQuickAxisAlignPanel::GetFeedbackVisibility)
-			]
 		]
 	];
+
 
 	if (GEditor)
 	{
@@ -735,16 +665,32 @@ bool SQuickAxisAlignPanel::HasValidSelection() const
 	return Sel->Num() >= 2;
 }
 
-// ── Feedback ───────────────────────────────────────────────
+// ── Info ────────────────────────────────────────────────────
 
-FText SQuickAxisAlignPanel::GetFeedbackText() const
+FText SQuickAxisAlignPanel::GetInfoText() const
 {
-	return FeedbackText;
+	if (!FeedbackText.IsEmpty()) return FeedbackText;
+
+	if (IsVisualAlignActive())
+	{
+		return LOCTEXT("VA_CancelWithEsc", "Visual Align active — Press ESC to cancel");
+	}
+
+	return GetInstructionText();
 }
 
-EVisibility SQuickAxisAlignPanel::GetFeedbackVisibility() const
+FSlateColor SQuickAxisAlignPanel::GetInfoColor() const
 {
-	return FeedbackText.IsEmpty() ? EVisibility::Collapsed : EVisibility::HitTestInvisible;
+	if (!FeedbackText.IsEmpty()) return FLinearColor(0.2f, 0.6f, 0.2f);
+	return FSlateColor::UseSubduedForeground();
+}
+
+EVisibility SQuickAxisAlignPanel::GetInfoVisibility() const
+{
+	const FText T = GetInfoText();
+	const FString S = T.ToString();
+	if (S.IsEmpty() || S == TEXT(" ")) return EVisibility::Collapsed;
+	return EVisibility::HitTestInvisible;
 }
 
 // ── Location ───────────────────────────────────────────────
@@ -873,6 +819,14 @@ FReply SQuickAxisAlignPanel::OnToggleScaleAxes()
 
 FReply SQuickAxisAlignPanel::OnApply()
 {
+	// If Visual Align is ready, apply it instead
+	if (IsVisualAlignReady())
+	{
+		FQuickAxisAlignModule::Get().ApplyVisualAlign();
+		FeedbackText = LOCTEXT("VisualAlignDone", "Visual align applied");
+		return FReply::Handled();
+	}
+
 	if (!GEditor)
 		return FReply::Handled();
 
@@ -956,50 +910,6 @@ FReply SQuickAxisAlignPanel::OnStartVisualAlign()
 {
 	FQuickAxisAlignModule::Get().StartVisualAlignSession();
 	return FReply::Handled();
-}
-
-FReply SQuickAxisAlignPanel::OnApplyVisualAlign()
-{
-	FQuickAxisAlignModule::Get().ApplyVisualAlign();
-	FeedbackText = LOCTEXT("VisualAlignDone", "Visual align applied");
-	return FReply::Handled();
-}
-
-FReply SQuickAxisAlignPanel::OnCancelVisualAlign()
-{
-	FQuickAxisAlignModule::Get().CancelVisualAlign();
-	return FReply::Handled();
-}
-
-FText SQuickAxisAlignPanel::GetVisualAlignStatus() const
-{
-	FQAAVisualAlignEdMode* Mode = GetVisualAlignMode();
-	if (!Mode)
-	{
-		return LOCTEXT("VA_Idle", "Click 'Use Visual Align' to start.");
-	}
-	switch (Mode->GetStep())
-	{
-		case EQAAVisualAlignStep::Inactive:
-			return LOCTEXT("VA_Inactive", "Click 'Use Visual Align' to start.");
-		case EQAAVisualAlignStep::WaitingForSource:
-			return LOCTEXT("VA_PickSource", "Click on a point of the Source actor");
-		case EQAAVisualAlignStep::WaitingForTarget:
-			return LOCTEXT("VA_PickTarget", "Click on a point of the Target actor");
-	case EQAAVisualAlignStep::ReadyToApply:
-		return LOCTEXT("VA_Ready", "Ready. Click another target or press Apply.");
-	}
-	return FText::GetEmpty();
-}
-
-EVisibility SQuickAxisAlignPanel::GetVisualAlignReadyVisibility() const
-{
-	FQAAVisualAlignEdMode* Mode = GetVisualAlignMode();
-	if (Mode && Mode->GetStep() == EQAAVisualAlignStep::ReadyToApply)
-	{
-		return EVisibility::Visible;
-	}
-	return EVisibility::Collapsed;
 }
 
 bool SQuickAxisAlignPanel::IsVisualAlignReady() const

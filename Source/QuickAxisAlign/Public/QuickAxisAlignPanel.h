@@ -16,8 +16,6 @@ private:
 	FReply OnApply();
 
 	FReply OnStartVisualAlign();
-	FReply OnApplyVisualAlign();
-	FReply OnCancelVisualAlign();
 
 	FReply OnToggleLocationAxes();
 	FReply OnToggleRotationAxes();
@@ -31,14 +29,13 @@ private:
 	FText GetInstructionText() const;
 	bool HasValidSelection() const;
 
-	FText GetVisualAlignStatus() const;
-	EVisibility GetVisualAlignReadyVisibility() const;
 	bool IsVisualAlignReady() const;
 	bool IsVisualAlignActive() const;
 	bool IsVisualAlignInactive() const;
 
-	FText GetFeedbackText() const;
-	EVisibility GetFeedbackVisibility() const;
+	FText GetInfoText() const;
+	FSlateColor GetInfoColor() const;
+	EVisibility GetInfoVisibility() const;
 
 	FText FeedbackText;
 

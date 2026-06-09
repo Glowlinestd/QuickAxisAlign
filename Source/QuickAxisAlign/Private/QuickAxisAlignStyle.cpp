@@ -48,3 +48,12 @@ FName FQuickAxisAlignStyle::GetStyleSetName()
 	static const FName StyleName("QuickAxisAlignStyle");
 	return StyleName;
 }
+
+const FSlateBrush* FQuickAxisAlignStyle::GetBrush(const FName& PropertyName)
+{
+	if (StyleInstance.IsValid())
+	{
+		return StyleInstance->GetBrush(PropertyName);
+	}
+	return nullptr;
+}
