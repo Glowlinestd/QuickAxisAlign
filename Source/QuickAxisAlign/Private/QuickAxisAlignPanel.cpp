@@ -18,6 +18,18 @@
 
 #define LOCTEXT_NAMESPACE "SQuickAxisAlignPanel"
 
+namespace
+{
+	FQAAVisualAlignEdMode* GetVisualAlignMode()
+	{
+		if (!GLevelEditorModeToolsIsValid())
+		{
+			return nullptr;
+		}
+		return GLevelEditorModeTools().GetActiveModeTyped<FQAAVisualAlignEdMode>(FQAAVisualAlignEdMode::EM_QAAVisualAlignEdModeId);
+	}
+}
+
 	void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 	{
 		bPosX = bPosY = bPosZ = true;
@@ -562,6 +574,12 @@ void SQuickAxisAlignPanel::OnActorSelectionChanged(UObject* InObject)
 
 FText SQuickAxisAlignPanel::GetSourceLabel() const
 {
+	FQAAVisualAlignEdMode* Mode = GetVisualAlignMode();
+	if (Mode && Mode->GetStep() != EQAAVisualAlignStep::Inactive)
+	{
+		return LOCTEXT("Source", "Source");
+	}
+
 	if (!GEditor) return LOCTEXT("Source", "Source");
 
 	USelection* Sel = GEditor->GetSelectedActors();
@@ -572,6 +590,13 @@ FText SQuickAxisAlignPanel::GetSourceLabel() const
 
 FText SQuickAxisAlignPanel::GetSourceValueText() const
 {
+	FQAAVisualAlignEdMode* Mode = GetVisualAlignMode();
+	if (Mode && Mode->GetStep() != EQAAVisualAlignStep::Inactive)
+	{
+		AActor* SourceActor = Mode->GetSourceActor();
+		return SourceActor ? FText::FromString(SourceActor->GetActorLabel()) : LOCTEXT("NoneSelected", "—");
+	}
+
 	if (!GEditor) return FText::GetEmpty();
 
 	USelection* Sel = GEditor->GetSelectedActors();
@@ -598,6 +623,13 @@ FText SQuickAxisAlignPanel::GetSourceValueText() const
 
 FText SQuickAxisAlignPanel::GetTargetValueText() const
 {
+	FQAAVisualAlignEdMode* Mode = GetVisualAlignMode();
+	if (Mode && Mode->GetStep() != EQAAVisualAlignStep::Inactive)
+	{
+		AActor* TargetActor = Mode->GetTargetActor();
+		return TargetActor ? FText::FromString(TargetActor->GetActorLabel()) : LOCTEXT("NoneSelected", "—");
+	}
+
 	if (!GEditor) return FText::GetEmpty();
 
 	USelection* Sel = GEditor->GetSelectedActors();
@@ -615,6 +647,18 @@ FText SQuickAxisAlignPanel::GetTargetValueText() const
 
 FText SQuickAxisAlignPanel::GetSelectionTooltipText() const
 {
+	FQAAVisualAlignEdMode* Mode = GetVisualAlignMode();
+	if (Mode && Mode->GetStep() != EQAAVisualAlignStep::Inactive)
+	{
+		AActor* SourceActor = Mode->GetSourceActor();
+		AActor* TargetActor = Mode->GetTargetActor();
+		return FText::Format(
+			LOCTEXT("TT_VisualAlignActors", "Source: {0}\nTarget: {1}"),
+			SourceActor ? FText::FromString(SourceActor->GetActorLabel()) : LOCTEXT("NoneSelected", "—"),
+			TargetActor ? FText::FromString(TargetActor->GetActorLabel()) : LOCTEXT("NoneSelected", "—")
+		);
+	}
+
 	if (!GEditor) return FText::GetEmpty();
 
 	USelection* Sel = GEditor->GetSelectedActors();
@@ -907,18 +951,6 @@ FReply SQuickAxisAlignPanel::OnApply()
 }
 
 // ── Visual Align ──────────────────────────────────────────
-
-namespace
-{
-	FQAAVisualAlignEdMode* GetVisualAlignMode()
-	{
-		if (!GLevelEditorModeToolsIsValid())
-		{
-			return nullptr;
-		}
-		return GLevelEditorModeTools().GetActiveModeTyped<FQAAVisualAlignEdMode>(FQAAVisualAlignEdMode::EM_QAAVisualAlignEdModeId);
-	}
-}
 
 FReply SQuickAxisAlignPanel::OnStartVisualAlign()
 {

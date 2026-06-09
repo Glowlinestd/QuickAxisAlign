@@ -43,6 +43,8 @@ public:
 	void CancelSession();
 
 	EQAAVisualAlignStep GetStep() const { return Step; }
+	AActor* GetSourceActor() const { return Source.Get(); }
+	AActor* GetTargetActor() const { return Target.Get(); }
 
 private:
 	bool TryGetActorAndPointUnderCursor(FEditorViewportClient* ViewportClient, int32 MouseX, int32 MouseY, AActor*& OutActor, FVector& OutWorldPoint, FVector& OutNormal) const;

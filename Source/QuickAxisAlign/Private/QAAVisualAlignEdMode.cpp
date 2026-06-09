@@ -245,6 +245,9 @@ bool FQAAVisualAlignEdMode::HandleClick(FEditorViewportClient* InViewportClient,
 
 	if (Step == EQAAVisualAlignStep::WaitingForTarget && bHasSourcePoint && PickedActor == Source.Get())
 	{
+		SourcePoint = PickedPoint;
+		SourceNormal = PickedNormal;
+		bHoverValid = false;
 		return true;
 	}
 
