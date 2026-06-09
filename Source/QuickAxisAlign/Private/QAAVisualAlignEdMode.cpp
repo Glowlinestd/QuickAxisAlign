@@ -12,6 +12,7 @@
 #include "CollisionQueryParams.h"
 #include "Editor.h"
 #include "SceneManagement.h"
+#include "Styling/StyleColors.h"
 #include "HitProxies.h"
 
 #define LOCTEXT_NAMESPACE "QAAVisualAlignEdMode"
@@ -21,9 +22,10 @@ const FEditorModeID FQAAVisualAlignEdMode::EM_QAAVisualAlignEdModeId(
 
 namespace
 {
-	constexpr float MarkerRadius = 12.0f;
-	constexpr float ArrowLength = 50.0f;
-	constexpr float ArrowThickness = 2.0f;
+	constexpr float MarkerRadius = 8.0f;
+	constexpr float ArrowLength = 35.0f;
+	constexpr float ArrowThickness = 1.5f;
+	constexpr float CurveThickness = 1.2f;
 	constexpr int32 CurveSegments = 32;
 
 	// Slab-method ray vs AABB intersection. Returns true and fills OutHit
@@ -449,11 +451,11 @@ void FQAAVisualAlignEdMode::DrawConnectCurve(FPrimitiveDrawInterface* PDI, const
 		return;
 	}
 
+	const float ArcOffset = FMath::Clamp(Distance * 0.25f, 30.0f, 150.0f);
 	const float TangentLen = FMath::Min(Distance * 0.3f, ArrowLength * 2.0f);
-	const float ArcOffset = FMath::Clamp(Distance * 0.22f, 30.0f, 150.0f);
 
 	const FVector ControlA = From + FromNormal * TangentLen + ArcNormal * ArcOffset;
-	const FVector ControlB = To + ToNormal * TangentLen + ArcNormal * ArcOffset;
+	const FVector ControlB = To - ToNormal * FMath::Min(TangentLen, ArrowLength) + ArcNormal * ArcOffset;
 
 	FVector Prev = From;
 	for (int32 i = 1; i <= CurveSegments; ++i)
@@ -464,7 +466,7 @@ void FQAAVisualAlignEdMode::DrawConnectCurve(FPrimitiveDrawInterface* PDI, const
 			+ 3.0f * U * U * T * ControlA
 			+ 3.0f * U * T * T * ControlB
 			+ T * T * T * To;
-		PDI->DrawLine(Prev, Point, Color, SDPG_Foreground, ArrowThickness);
+		PDI->DrawLine(Prev, Point, Color, SDPG_Foreground, CurveThickness);
 		Prev = Point;
 	}
 }
@@ -476,28 +478,39 @@ void FQAAVisualAlignEdMode::DrawArrowHead(FPrimitiveDrawInterface* PDI, const FV
 		return;
 	}
 
-	FVector Right = FVector::CrossProduct(Direction, FVector::UpVector).GetSafeNormal();
+	const FVector Dir = Direction.GetSafeNormal();
+
+	FVector Right = FVector::CrossProduct(Dir, FVector::UpVector).GetSafeNormal();
 	if (Right.IsNearlyZero())
 	{
-		Right = FVector::CrossProduct(Direction, FVector::ForwardVector).GetSafeNormal();
+		Right = FVector::CrossProduct(Dir, FVector::ForwardVector).GetSafeNormal();
 	}
-	const FVector Up = FVector::CrossProduct(Right, Direction).GetSafeNormal();
+	const FVector Up = FVector::CrossProduct(Right, Dir).GetSafeNormal();
 
-	const float HeadLen = MarkerRadius * 1.8f;
-	const float HeadRad = MarkerRadius * 0.8f;
-	const FVector HeadBase = Tip - Direction * HeadLen;
+	const float HeadLen = MarkerRadius * 2.0f;
+	const float HeadRad = MarkerRadius * 0.45f;
+	const FVector HeadBase = Tip - Dir * HeadLen;
 
-	PDI->DrawLine(Tip, HeadBase + Right * HeadRad, Color, SDPG_Foreground, 2.0f);
-	PDI->DrawLine(Tip, HeadBase - Right * HeadRad, Color, SDPG_Foreground, 2.0f);
-	PDI->DrawLine(Tip, HeadBase + Up * HeadRad, Color, SDPG_Foreground, 2.0f);
-	PDI->DrawLine(Tip, HeadBase - Up * HeadRad, Color, SDPG_Foreground, 2.0f);
+	constexpr int32 NumSegments = 16;
+	FVector PrevPoint = HeadBase + Right * HeadRad;
+
+	for (int32 i = 1; i <= NumSegments; ++i)
+	{
+		const float Angle = (2.0f * PI * i) / NumSegments;
+		const FVector Point = HeadBase + (Right * FMath::Cos(Angle) + Up * FMath::Sin(Angle)) * HeadRad;
+
+		PDI->DrawLine(Tip, Point, Color, SDPG_Foreground, 2.0f);
+		PDI->DrawLine(PrevPoint, Point, Color, SDPG_Foreground, 2.0f);
+
+		PrevPoint = Point;
+	}
 }
 
 void FQAAVisualAlignEdMode::Render(const FSceneView* View, FViewport* Viewport, FPrimitiveDrawInterface* PDI)
 {
 	FEdMode::Render(View, Viewport, PDI);
 
-	const FLinearColor ArrowColor(0.0f, 0.4f, 1.0f, 1.0f);
+	const FLinearColor& ArrowColor = USlateThemeManager::Get().GetColor(EStyleColor::Primary);
 
 	if (bHasSourcePoint)
 	{
@@ -506,14 +519,15 @@ void FQAAVisualAlignEdMode::Render(const FSceneView* View, FViewport* Viewport, 
 
 	if (bHasTargetPoint)
 	{
-		DrawSmallArrow(PDI, TargetPoint, TargetNormal, ArrowColor);
+		const FVector TargetBase = TargetPoint + TargetNormal * ArrowLength;
+		DrawSmallArrow(PDI, TargetBase, -TargetNormal, ArrowColor);
 	}
 
 	if (bHasSourcePoint && bHasTargetPoint)
 	{
 		const FVector SourceTip = SourcePoint + SourceNormal * ArrowLength;
-		const FVector TargetTip = TargetPoint + TargetNormal * ArrowLength;
-		DrawConnectCurve(PDI, SourceTip, TargetTip, SourceNormal, TargetNormal, ArrowColor);
+		const FVector TargetBase = TargetPoint + TargetNormal * ArrowLength;
+		DrawConnectCurve(PDI, SourceTip, TargetBase, SourceNormal, TargetNormal, ArrowColor);
 	}
 }
 
