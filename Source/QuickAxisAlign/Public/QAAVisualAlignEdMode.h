@@ -46,7 +46,6 @@ public:
 
 private:
 	bool TryGetActorAndPointUnderCursor(FEditorViewportClient* ViewportClient, int32 MouseX, int32 MouseY, AActor*& OutActor, FVector& OutWorldPoint, FVector& OutNormal) const;
-	void SelectPickedActor(AActor* Actor) const;
 	void DrawSmallArrow(FPrimitiveDrawInterface* PDI, const FVector& Base, const FVector& Direction, const FLinearColor& Color) const;
 	void DrawConnectCurve(FPrimitiveDrawInterface* PDI, const FVector& From, const FVector& To, const FVector& FromNormal, const FVector& ToNormal, const FLinearColor& Color) const;
 	void DrawArrowHead(FPrimitiveDrawInterface* PDI, const FVector& Tip, const FVector& Direction, const FLinearColor& Color) const;

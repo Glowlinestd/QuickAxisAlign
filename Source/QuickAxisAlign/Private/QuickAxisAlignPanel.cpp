@@ -954,8 +954,8 @@ FText SQuickAxisAlignPanel::GetVisualAlignStatus() const
 			return LOCTEXT("VA_PickSource", "Click on a point of the Source actor");
 		case EQAAVisualAlignStep::WaitingForTarget:
 			return LOCTEXT("VA_PickTarget", "Click on a point of the Target actor");
-		case EQAAVisualAlignStep::ReadyToApply:
-			return LOCTEXT("VA_Ready", "Ready. Press Apply to move the Source.");
+	case EQAAVisualAlignStep::ReadyToApply:
+		return LOCTEXT("VA_Ready", "Ready. Click another target or press Apply.");
 	}
 	return FText::GetEmpty();
 }

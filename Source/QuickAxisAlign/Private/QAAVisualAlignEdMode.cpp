@@ -119,6 +119,8 @@ void FQAAVisualAlignEdMode::StartSession()
 	TargetNormal = FVector::ZeroVector;
 	Step = EQAAVisualAlignStep::WaitingForSource;
 	bHoverValid = false;
+
+	GEditor->SelectNone(false, true, false);
 }
 
 void FQAAVisualAlignEdMode::CancelSession()
@@ -131,6 +133,8 @@ void FQAAVisualAlignEdMode::CancelSession()
 	SourceNormal = FVector::ZeroVector;
 	TargetNormal = FVector::ZeroVector;
 	bHoverValid = false;
+
+	GEditor->SelectNone(false, true, false);
 }
 
 bool FQAAVisualAlignEdMode::ApplyAlignment()
@@ -164,6 +168,8 @@ bool FQAAVisualAlignEdMode::ApplyAlignment()
 	SourceNormal = FVector::ZeroVector;
 	TargetNormal = FVector::ZeroVector;
 	bHoverValid = false;
+
+	GEditor->SelectNone(false, true, false);
 	return true;
 }
 
@@ -201,7 +207,7 @@ bool FQAAVisualAlignEdMode::GetCursor(EMouseCursor::Type& OutCursor) const
 
 bool FQAAVisualAlignEdMode::HandleClick(FEditorViewportClient* InViewportClient, HHitProxy* HitProxy, const FViewportClick& Click)
 {
-	if (Step != EQAAVisualAlignStep::WaitingForSource && Step != EQAAVisualAlignStep::WaitingForTarget)
+	if (Step != EQAAVisualAlignStep::WaitingForSource && Step != EQAAVisualAlignStep::WaitingForTarget && Step != EQAAVisualAlignStep::ReadyToApply)
 	{
 		return false;
 	}
@@ -227,7 +233,18 @@ bool FQAAVisualAlignEdMode::HandleClick(FEditorViewportClient* InViewportClient,
 		return true;
 	}
 
-	SelectPickedActor(PickedActor);
+	if (Step == EQAAVisualAlignStep::WaitingForTarget && bHasSourcePoint && PickedActor == Source.Get())
+	{
+		return true;
+	}
+
+	if (Step == EQAAVisualAlignStep::ReadyToApply && bHasSourcePoint && PickedActor == Source.Get())
+	{
+		SourcePoint = PickedPoint;
+		SourceNormal = PickedNormal;
+		bHoverValid = false;
+		return true;
+	}
 
 	if (Step == EQAAVisualAlignStep::WaitingForSource)
 	{
@@ -237,13 +254,20 @@ bool FQAAVisualAlignEdMode::HandleClick(FEditorViewportClient* InViewportClient,
 		bHasSourcePoint = true;
 		Step = EQAAVisualAlignStep::WaitingForTarget;
 	}
-	else
+	else if (Step == EQAAVisualAlignStep::WaitingForTarget)
 	{
 		Target = PickedActor;
 		TargetPoint = PickedPoint;
 		TargetNormal = PickedNormal;
 		bHasTargetPoint = true;
 		Step = EQAAVisualAlignStep::ReadyToApply;
+	}
+	else
+	{
+		Target = PickedActor;
+		TargetPoint = PickedPoint;
+		TargetNormal = PickedNormal;
+		bHasTargetPoint = true;
 	}
 
 	bHoverValid = false;
@@ -400,18 +424,6 @@ bool FQAAVisualAlignEdMode::TryGetActorAndPointUnderCursor(FEditorViewportClient
 	}
 
 	return false;
-}
-
-void FQAAVisualAlignEdMode::SelectPickedActor(AActor* Actor) const
-{
-	if (!GEditor || !Actor)
-	{
-		return;
-	}
-
-	GEditor->SelectNone(/*bNoteSelectionChange*/ false, /*bDeselectBSPSurfs*/ true, /*WarnAboutManyActors*/ false);
-
-	GEditor->SelectActor(Actor, /*bInSelected*/ true, /*bNotify*/ true, /*bSelectEvenIfHidden*/ true);
 }
 
 
