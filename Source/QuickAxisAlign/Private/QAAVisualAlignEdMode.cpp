@@ -151,14 +151,24 @@ bool FQAAVisualAlignEdMode::ApplyAlignment()
 		return false;
 	}
 
-	const FVector Delta = TargetPoint - SourcePoint;
+	const FVector SourceNorm = SourceNormal.GetSafeNormal();
+	const FVector TargetNorm = TargetNormal.GetSafeNormal();
 
 	FScopedTransaction Transaction(LOCTEXT("QAAVisualAlignTxn", "Quick Axis Visual Align"));
 	SourceActor->Modify();
-	SourceActor->SetActorLocation(SourceActor->GetActorLocation() + Delta, false);
 
-	UE_LOG(LogTemp, Log, TEXT("QAAVisualAlign: Moved %s by %s"),
-		*SourceActor->GetActorLabel(), *Delta.ToString());
+	const FQuat DeltaRotation = FQuat::FindBetweenNormals(SourceNorm, -TargetNorm);
+	const FQuat NewRotation = DeltaRotation * SourceActor->GetActorQuat();
+
+	const FVector ActorLocation = SourceActor->GetActorLocation();
+	const FVector SourceOffset = SourcePoint - ActorLocation;
+	const FVector RotatedSourcePoint = ActorLocation + DeltaRotation.RotateVector(SourceOffset);
+	const FVector NewLocation = ActorLocation + (TargetPoint - RotatedSourcePoint);
+
+	SourceActor->SetActorLocationAndRotation(NewLocation, NewRotation, false);
+
+	UE_LOG(LogTemp, Log, TEXT("QAAVisualAlign: Moved+Rotated %s by %s"),
+		*SourceActor->GetActorLabel(), *(TargetPoint - SourcePoint).ToString());
 
 	Step = EQAAVisualAlignStep::Inactive;
 	bHasSourcePoint = false;
