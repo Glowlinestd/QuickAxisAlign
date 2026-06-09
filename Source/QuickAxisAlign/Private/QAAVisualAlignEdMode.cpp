@@ -451,11 +451,11 @@ void FQAAVisualAlignEdMode::DrawConnectCurve(FPrimitiveDrawInterface* PDI, const
 		return;
 	}
 
-	const float ArcOffset = FMath::Clamp(Distance * 0.25f, 30.0f, 150.0f);
-	const float TangentLen = FMath::Min(Distance * 0.3f, ArrowLength * 2.0f);
+	const float ArcOffset = FMath::Clamp(Distance * 0.08f, 10.0f, 60.0f);
+	const float TangentLen = FMath::Min(Distance * 0.4f, ArrowLength * 3.0f);
 
 	const FVector ControlA = From + FromNormal * TangentLen + ArcNormal * ArcOffset;
-	const FVector ControlB = To - ToNormal * FMath::Min(TangentLen, ArrowLength) + ArcNormal * ArcOffset;
+	const FVector ControlB = To + ToNormal * TangentLen;
 
 	FVector Prev = From;
 	for (int32 i = 1; i <= CurveSegments; ++i)
