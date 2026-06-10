@@ -15,6 +15,7 @@
 #include "EditorModeRegistry.h"
 #include "PropertyEditorModule.h"
 #include "LevelEditor.h"
+#include "Styling/AppStyle.h"
 
 #define LOCTEXT_NAMESPACE "FQuickAxisAlignModule"
 
@@ -64,7 +65,7 @@ void FQuickAxisAlignModule::StartupModule()
 		.SetDisplayName(LOCTEXT("QuickAxisAlignTabTitle", "Quick Axis Align"))
 		.SetTooltipText(LOCTEXT("QuickAxisAlignTabTooltip", "Align actors by copying coordinates."))
 		.SetMenuType(ETabSpawnerMenuType::Hidden)
-		.SetIcon(FSlateIcon(FQuickAxisAlignStyle::GetStyleSetName(), "QuickAxisAlign.AlignActors"));
+		.SetIcon(FSlateIcon(FName("ModelingToolsStyle"), "ModelingToolsManagerCommands.BeginTransformMeshesTool"));
 
 }
 
@@ -108,7 +109,7 @@ void FQuickAxisAlignModule::RegisterMenus()
 		"QuickAxisAlign_OpenPanel",
 		LOCTEXT("QuickAxisAlignTabTitle", "Quick Axis Align"),
 		LOCTEXT("QuickAxisAlignTabTooltip", "Align actors by copying coordinates."),
-		FSlateIcon(FQuickAxisAlignStyle::GetStyleSetName(), "QuickAxisAlign.AlignActors"),
+		FSlateIcon(FName("ModelingToolsStyle"), "ModelingToolsManagerCommands.BeginTransformMeshesTool"),
 		FToolUIActionChoice(FUIAction(FExecuteAction::CreateLambda([]()
 			{
 				FGlobalTabmanager::Get()->TryInvokeTab(QuickAxisAlignTabName);
@@ -120,7 +121,7 @@ void FQuickAxisAlignModule::RegisterMenus()
 		FQuickAxisAlignCommands::Get().StartVisualAlign,
 		LOCTEXT("VisualAlignMenuLabel", "Visual Align"),
 		LOCTEXT("VisualAlignMenuTooltip", "Start Visual Align mode to pick source and target points in the viewport"),
-		FSlateIcon(FQuickAxisAlignStyle::GetStyleSetName(), "QuickAxisAlign.AlignActors")
+		FSlateIcon(FAppStyle::GetAppStyleSetName(), "ViewportToolbar.Snap")
 	);
 	MenuEntry.SetCommandList(CommandList);
 }

@@ -13,6 +13,7 @@
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/SOverlay.h"
 #include "Widgets/SBoxPanel.h"
+#include "Styling/AppStyle.h"
 #include "Widgets/SQAACellBorder.h"
 #include "Widgets/Text/STextBlock.h"
 
@@ -324,7 +325,9 @@ void FQAAPanelSettingsCustomization::CustomizeDetails(IDetailLayoutBuilder& Deta
 		.Padding(8.f, 0.f, 0.f, 0.f)
 		[
 			SNew(SButton)
-			.ContentPadding(FMargin(6.f, 2.f))
+			.ButtonStyle(FAppStyle::Get(), "Button")
+			.HAlign(HAlign_Left)
+			.ContentPadding(FMargin(2.f, 3.f))
 			.ToolTipText(LOCTEXT("VisualAlignTT", "Start Visual Align mode to pick source and target points in the viewport"))
 			.OnClicked_Lambda([]()
 			{
@@ -338,20 +341,23 @@ void FQAAPanelSettingsCustomization::CustomizeDetails(IDetailLayoutBuilder& Deta
 				.VAlign(VAlign_Center)
 				[
 					SNew(SBox)
-					.WidthOverride(16.f)
-					.HeightOverride(16.f)
+					.WidthOverride(12.f)
+					.HeightOverride(12.f)
+					.HAlign(HAlign_Center)
+					.VAlign(VAlign_Center)
 					[
 						SNew(SImage)
-						.Image(FQuickAxisAlignStyle::GetBrush("QuickAxisAlign.AlignActors"))
+						.Image(FAppStyle::GetBrush("ViewportToolbar.Snap"))
+						.ColorAndOpacity(FSlateColor::UseForeground())
 					]
 				]
 				+ SHorizontalBox::Slot()
 				.AutoWidth()
 				.VAlign(VAlign_Center)
-				.Padding(4.f, 0.f, 0.f, 0.f)
+				.Padding(6.f, 0.f, 0.f, 0.f)
 				[
 					SNew(STextBlock)
-					.Text(FText::FromString(TEXT("Use Visual Align")))
+					.Text(FText::FromString(TEXT("Visual Align")))
 				]
 			]
 		]
