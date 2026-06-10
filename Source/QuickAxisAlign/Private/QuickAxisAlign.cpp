@@ -125,19 +125,10 @@ void FQuickAxisAlignModule::RegisterMenus()
 	MenuEntry.SetCommandList(CommandList);
 }
 
-void FQuickAxisAlignModule::AlignSelectedActors()
-{
-	FGlobalTabmanager::Get()->TryInvokeTab(QuickAxisAlignTabName);
-}
-
 namespace
 {
 	FEditorModeTools* GetModeManager()
 	{
-		if (!GLevelEditorModeToolsIsValid())
-		{
-			return nullptr;
-		}
 		return &GLevelEditorModeTools();
 	}
 }

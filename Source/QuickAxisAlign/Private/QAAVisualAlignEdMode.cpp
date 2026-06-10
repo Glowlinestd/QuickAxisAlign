@@ -1,5 +1,7 @@
 #include "QAAVisualAlignEdMode.h"
 
+#include "QAAPanelSettings.h"
+
 #include "EditorModeManager.h"
 #include "EditorModes.h"
 #include "EditorViewportClient.h"
@@ -153,22 +155,32 @@ bool FQAAVisualAlignEdMode::ApplyAlignment()
 
 	const FVector SourceNorm = SourceNormal.GetSafeNormal();
 	const FVector TargetNorm = TargetNormal.GetSafeNormal();
+	const UQAAPanelSettings* Settings = GetDefault<UQAAPanelSettings>();
+	const bool bMoveOnly = Settings && Settings->VisualAlignMode == EVisualAlignMode::MoveOnly;
 
 	FScopedTransaction Transaction(LOCTEXT("QAAVisualAlignTxn", "Quick Axis Visual Align"));
 	SourceActor->Modify();
 
-	const FQuat DeltaRotation = FQuat::FindBetweenNormals(SourceNorm, -TargetNorm);
-	const FQuat NewRotation = DeltaRotation * SourceActor->GetActorQuat();
-
 	const FVector ActorLocation = SourceActor->GetActorLocation();
-	const FVector SourceOffset = SourcePoint - ActorLocation;
-	const FVector RotatedSourcePoint = ActorLocation + DeltaRotation.RotateVector(SourceOffset);
-	const FVector NewLocation = ActorLocation + (TargetPoint - RotatedSourcePoint);
+	FVector NewLocation = ActorLocation + (TargetPoint - SourcePoint);
 
-	SourceActor->SetActorLocationAndRotation(NewLocation, NewRotation, false);
+	if (bMoveOnly)
+	{
+		SourceActor->SetActorLocation(NewLocation, false);
+	}
+	else
+	{
+		const FQuat DeltaRotation = FQuat::FindBetweenNormals(SourceNorm, -TargetNorm);
+		const FQuat NewRotation = DeltaRotation * SourceActor->GetActorQuat();
+		const FVector SourceOffset = SourcePoint - ActorLocation;
+		const FVector RotatedSourcePoint = ActorLocation + DeltaRotation.RotateVector(SourceOffset);
+		NewLocation = ActorLocation + (TargetPoint - RotatedSourcePoint);
+		SourceActor->SetActorLocationAndRotation(NewLocation, NewRotation, false);
+	}
 
-	UE_LOG(LogTemp, Log, TEXT("QAAVisualAlign: Moved+Rotated %s by %s"),
-		*SourceActor->GetActorLabel(), *(TargetPoint - SourcePoint).ToString());
+	UE_LOG(LogTemp, Log, TEXT("QAAVisualAlign: %s %s by %s"),
+		bMoveOnly ? TEXT("Moved") : TEXT("Moved+Rotated"),
+		*SourceActor->GetActorLabel(), *(NewLocation - ActorLocation).ToString());
 
 	Step = EQAAVisualAlignStep::Inactive;
 	bHasSourcePoint = false;

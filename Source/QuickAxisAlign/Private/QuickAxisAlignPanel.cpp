@@ -1,18 +1,11 @@
 #include "QuickAxisAlignPanel.h"
 #include "QuickAxisAlign.h"
-#include "QuickAxisAlignStyle.h"
 #include "QAAPanelSettings.h"
 #include "QAAVisualAlignEdMode.h"
 
-#include "Widgets/SQAACellBorder.h"
-
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SBox.h"
-#include "Widgets/Layout/SSeparator.h"
-#include "Widgets/Layout/SSplitter.h"
 #include "Widgets/SBoxPanel.h"
-#include "Widgets/Input/SCheckBox.h"
-#include "Widgets/Images/SImage.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Text/STextBlock.h"
 #include "Styling/AppStyle.h"
@@ -29,10 +22,6 @@ namespace
 {
 	FQAAVisualAlignEdMode* GetVisualAlignMode()
 	{
-		if (!GLevelEditorModeToolsIsValid())
-		{
-			return nullptr;
-		}
 		return GLevelEditorModeTools().GetActiveModeTyped<FQAAVisualAlignEdMode>(FQAAVisualAlignEdMode::EM_QAAVisualAlignEdModeId);
 	}
 }
@@ -487,14 +476,6 @@ FReply SQuickAxisAlignPanel::OnApply()
 	return FReply::Handled();
 }
 
-// ── Visual Align ──────────────────────────────────────────
-
-FReply SQuickAxisAlignPanel::OnStartVisualAlign()
-{
-	FQuickAxisAlignModule::Get().StartVisualAlignSession();
-	return FReply::Handled();
-}
-
 bool SQuickAxisAlignPanel::IsVisualAlignReady() const
 {
 	FQAAVisualAlignEdMode* Mode = GetVisualAlignMode();
@@ -505,12 +486,6 @@ bool SQuickAxisAlignPanel::IsVisualAlignActive() const
 {
 	FQAAVisualAlignEdMode* Mode = GetVisualAlignMode();
 	return Mode && Mode->GetStep() != EQAAVisualAlignStep::Inactive;
-}
-
-bool SQuickAxisAlignPanel::IsVisualAlignInactive() const
-{
-	FQAAVisualAlignEdMode* Mode = GetVisualAlignMode();
-	return !Mode || Mode->GetStep() == EQAAVisualAlignStep::Inactive;
 }
 
 #undef LOCTEXT_NAMESPACE

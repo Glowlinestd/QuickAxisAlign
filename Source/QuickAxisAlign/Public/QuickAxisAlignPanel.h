@@ -18,8 +18,6 @@ private:
 	void OnActorSelectionChanged(UObject* InObject);
 	FReply OnApply();
 
-	FReply OnStartVisualAlign();
-
 	FText GetSourceLabel() const;
 	FText GetSourceValueText() const;
 	FText GetTargetValueText() const;
@@ -30,7 +28,6 @@ private:
 
 	bool IsVisualAlignReady() const;
 	bool IsVisualAlignActive() const;
-	bool IsVisualAlignInactive() const;
 
 	FText GetInfoText() const;
 	FSlateColor GetInfoColor() const;

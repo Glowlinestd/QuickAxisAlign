@@ -22,7 +22,6 @@ public:
 private:
 	void RegisterMenus();
 	TSharedRef<SDockTab> SpawnTab(const FSpawnTabArgs& Args);
-	void AlignSelectedActors();
 
 	TSharedPtr<FUICommandList> CommandList;
 };
