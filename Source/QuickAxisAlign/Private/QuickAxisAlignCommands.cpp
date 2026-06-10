@@ -4,7 +4,7 @@
 
 void FQuickAxisAlignCommands::RegisterCommands()
 {
-	UI_COMMAND(AlignSelectedActors, "Align Actors", "Align the first selected actor to the position of the second selected actor", EUserInterfaceActionType::Button, FInputChord());
+	UI_COMMAND(StartVisualAlign, "Visual Align", "Start Visual Align mode to pick source and target points in the viewport", EUserInterfaceActionType::Button, FInputChord(EKeys::X, EModifierKey::Alt));
 }
 
 #undef LOCTEXT_NAMESPACE

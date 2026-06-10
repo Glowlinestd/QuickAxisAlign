@@ -17,5 +17,5 @@ public:
 
 	virtual void RegisterCommands() override;
 
-	TSharedPtr<FUICommandInfo> AlignSelectedActors;
+	TSharedPtr<FUICommandInfo> StartVisualAlign;
 };

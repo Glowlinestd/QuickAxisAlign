@@ -14,6 +14,7 @@
 #include "EditorModeManager.h"
 #include "EditorModeRegistry.h"
 #include "PropertyEditorModule.h"
+#include "LevelEditor.h"
 
 #define LOCTEXT_NAMESPACE "FQuickAxisAlignModule"
 
@@ -40,11 +41,17 @@ void FQuickAxisAlignModule::StartupModule()
 
 	CommandList = MakeShareable(new FUICommandList);
 	CommandList->MapAction(
-		FQuickAxisAlignCommands::Get().AlignSelectedActors,
-		FExecuteAction::CreateRaw(this, &FQuickAxisAlignModule::AlignSelectedActors),
+		FQuickAxisAlignCommands::Get().StartVisualAlign,
+		FExecuteAction::CreateRaw(this, &FQuickAxisAlignModule::StartVisualAlignSession),
 		FCanExecuteAction()
 	);
+
 	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FQuickAxisAlignModule::RegisterMenus));
+
+	{
+		FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
+		LevelEditorModule.GetGlobalLevelEditorActions()->Append(CommandList.ToSharedRef());
+	}
 
 	FEditorModeRegistry::Get().RegisterMode<FQAAVisualAlignEdMode>(
 		FQAAVisualAlignEdMode::EM_QAAVisualAlignEdModeId,
@@ -108,13 +115,13 @@ void FQuickAxisAlignModule::RegisterMenus()
 
 	FToolMenuSection& Section = ToolbarMenu->AddSection("QuickAxisAlign", LOCTEXT("QuickAxisAlignSection", "Quick Axis Align"));
 
-	FToolMenuEntry& Entry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(
-		FQuickAxisAlignCommands::Get().AlignSelectedActors,
+	Section.AddEntry(FToolMenuEntry::InitToolBarButton(
+		"QuickAxisAlign_Align",
+		FUIAction(FExecuteAction::CreateRaw(this, &FQuickAxisAlignModule::AlignSelectedActors)),
 		LOCTEXT("AlignActorsLabel", "Align"),
 		LOCTEXT("AlignActorsTooltip", "Quick Axis Align: alinear el primer actor seleccionado a la posicion del segundo"),
 		FSlateIcon(FQuickAxisAlignStyle::GetStyleSetName(), "QuickAxisAlign.AlignActors")
 	));
-	Entry.SetCommandList(CommandList);
 
 	UE_LOG(LogTemp, Log, TEXT("QuickAxisAlign: Button added to toolbar!"));
 }
