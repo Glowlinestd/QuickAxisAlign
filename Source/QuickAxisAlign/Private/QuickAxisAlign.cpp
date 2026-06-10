@@ -4,16 +4,16 @@
 #include "QuickAxisAlignCommands.h"
 #include "QuickAxisAlignStyle.h"
 #include "QuickAxisAlignPanel.h"
+#include "QAAPanelSettingsCustomization.h"
 #include "QAAVisualAlignEdMode.h"
+#include "QAAPanelSettings.h"
 
 #include "ToolMenus.h"
-#include "Framework/Application/SlateApplication.h"
 #include "Framework/Docking/TabManager.h"
 #include "Widgets/Docking/SDockTab.h"
-#include "Widgets/SWindow.h"
-#include "LevelEditor.h"
 #include "EditorModeManager.h"
 #include "EditorModeRegistry.h"
+#include "PropertyEditorModule.h"
 
 #define LOCTEXT_NAMESPACE "FQuickAxisAlignModule"
 
@@ -31,13 +31,19 @@ void FQuickAxisAlignModule::StartupModule()
 	FQuickAxisAlignStyle::Initialize();
 	FQuickAxisAlignCommands::Register();
 
+	FPropertyEditorModule& PropertyEditorModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+	PropertyEditorModule.RegisterCustomClassLayout(
+		UQAAPanelSettings::StaticClass()->GetFName(),
+		FOnGetDetailCustomizationInstance::CreateStatic(&FQAAPanelSettingsCustomization::MakeInstance)
+	);
+	PropertyEditorModule.NotifyCustomizationModuleChanged();
+
 	CommandList = MakeShareable(new FUICommandList);
 	CommandList->MapAction(
 		FQuickAxisAlignCommands::Get().AlignSelectedActors,
 		FExecuteAction::CreateRaw(this, &FQuickAxisAlignModule::AlignSelectedActors),
 		FCanExecuteAction()
 	);
-
 	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FQuickAxisAlignModule::RegisterMenus));
 
 	FEditorModeRegistry::Get().RegisterMode<FQAAVisualAlignEdMode>(
@@ -51,6 +57,7 @@ void FQuickAxisAlignModule::StartupModule()
 		.SetDisplayName(LOCTEXT("QuickAxisAlignTabTitle", "Quick Axis Align"))
 		.SetTooltipText(LOCTEXT("QuickAxisAlignTabTooltip", "Align actors by copying coordinates."))
 		.SetIcon(FSlateIcon(FQuickAxisAlignStyle::GetStyleSetName(), "QuickAxisAlign.AlignActors"));
+
 }
 
 void FQuickAxisAlignModule::ShutdownModule()
@@ -60,6 +67,13 @@ void FQuickAxisAlignModule::ShutdownModule()
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(QuickAxisAlignTabName);
 
 	UToolMenus::UnRegisterStartupCallback(this);
+
+	if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
+	{
+		FPropertyEditorModule& PropertyEditorModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+		PropertyEditorModule.UnregisterCustomClassLayout(UQAAPanelSettings::StaticClass()->GetFName());
+		PropertyEditorModule.NotifyCustomizationModuleChanged();
+	}
 
 	FQuickAxisAlignCommands::Unregister();
 	FQuickAxisAlignStyle::Shutdown();

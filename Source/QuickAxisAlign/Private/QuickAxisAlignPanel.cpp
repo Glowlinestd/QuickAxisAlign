@@ -1,6 +1,7 @@
 #include "QuickAxisAlignPanel.h"
 #include "QuickAxisAlign.h"
 #include "QuickAxisAlignStyle.h"
+#include "QAAPanelSettings.h"
 #include "QAAVisualAlignEdMode.h"
 
 #include "Widgets/SQAACellBorder.h"
@@ -18,6 +19,9 @@
 #include "Engine/Selection.h"
 #include "Editor.h"
 #include "EditorModeManager.h"
+#include "IDetailsView.h"
+#include "Modules/ModuleManager.h"
+#include "PropertyEditorModule.h"
 
 #define LOCTEXT_NAMESPACE "SQuickAxisAlignPanel"
 
@@ -35,78 +39,27 @@ namespace
 
 	void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 	{
-		bPosX = bPosY = bPosZ = true;
+		bPosX = bPosY = bPosZ = false;
 		bRotX = bRotY = bRotZ = false;
 		bScaleX = bScaleY = bScaleZ = false;
 
-		constexpr float LabelW = 76.f;
-		constexpr float TableRowH = 28.f;
+		PanelSettings.Reset(NewObject<UQAAPanelSettings>(GetTransientPackage(), NAME_None, RF_Transient));
+
+		FPropertyEditorModule& PropertyEditorModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+
+		FDetailsViewArgs DetailsArgs;
+		DetailsArgs.bAllowSearch = false;
+		DetailsArgs.bHideSelectionTip = true;
+		DetailsArgs.bShowOptions = true;
+		DetailsArgs.bShowPropertyMatrixButton = false;
+		DetailsArgs.NameAreaSettings = FDetailsViewArgs::HideNameArea;
+		DetailsArgs.ColumnWidth = 0.7f;
+
+		TSharedRef<IDetailsView> DetailsView = PropertyEditorModule.CreateDetailView(DetailsArgs);
+		DetailsView->SetObject(PanelSettings.Get());
 
 		FSlateFontInfo PanelFont = FAppStyle::Get().GetFontStyle("NormalText");
 		PanelFont.Size = 9;
-
-	const auto MakeAxisRow = [this, TableRowH](
-		ECheckBoxState(SQuickAxisAlignPanel::* GetX)() const,
-		ECheckBoxState(SQuickAxisAlignPanel::* GetY)() const,
-		ECheckBoxState(SQuickAxisAlignPanel::* GetZ)() const,
-		void(SQuickAxisAlignPanel::* OnX)(ECheckBoxState),
-		void(SQuickAxisAlignPanel::* OnY)(ECheckBoxState),
-		void(SQuickAxisAlignPanel::* OnZ)(ECheckBoxState)) -> TSharedRef<SWidget>
-	{
-		return SNew(SBox)
-		.HeightOverride(TableRowH)
-		[
-			SNew(SHorizontalBox)
-
-			+ SHorizontalBox::Slot()
-			.FillWidth(1.f)
-			[
-				SNew(SQAACellBorder)
-				.Padding(FMargin(8.f, 5.f))
-				[
-					SNew(SBox)
-					.HAlign(HAlign_Center)
-					[
-					SNew(SCheckBox)
-					.IsChecked(this, GetX)
-					.OnCheckStateChanged(this, OnX)
-					]
-				]
-			]
-
-			+ SHorizontalBox::Slot()
-			.FillWidth(1.f)
-			[
-				SNew(SQAACellBorder)
-				.Padding(FMargin(8.f, 5.f))
-				[
-					SNew(SBox)
-					.HAlign(HAlign_Center)
-					[
-					SNew(SCheckBox)
-					.IsChecked(this, GetY)
-					.OnCheckStateChanged(this, OnY)
-					]
-				]
-			]
-
-			+ SHorizontalBox::Slot()
-			.FillWidth(1.f)
-			[
-				SNew(SQAACellBorder)
-				.Padding(FMargin(8.f, 5.f))
-				[
-					SNew(SBox)
-					.HAlign(HAlign_Center)
-					[
-					SNew(SCheckBox)
-					.IsChecked(this, GetZ)
-					.OnCheckStateChanged(this, OnZ)
-					]
-				]
-			]
-		];
-	};
 
 	ChildSlot
 	[
@@ -177,224 +130,13 @@ namespace
 				]
 			]
 
-			// ── Table: Location / Rotation / Scale ──────────
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			.Padding(0, 8, 0, 4)
-			[
-				SNew(SSplitter)
-				.PhysicalSplitterHandleSize(1.25f)
-
-				+ SSplitter::Slot()
-				.Value(0.46f)
-				.MinSize(LabelW)
-				[
-					SNew(SVerticalBox)
-
-					// ── Label column header ────────────────────
-					+ SVerticalBox::Slot()
-					.AutoHeight()
-					[
-						SNew(SBox)
-						.HeightOverride(TableRowH)
-						[
-							SNew(SQAACellBorder)
-							.Padding(FMargin(8.f, 5.f))
-							.BorderColor(FSlateColor(FLinearColor::Transparent))
-							.BackgroundColor(FSlateColor(EStyleColor::Recessed))
-							[
-								SNew(SSpacer)
-								.Size(FVector2D(1.f, 1.f))
-							]
-						]
-					]
-
-					// ── Location label ────────────────────────────
-					+ SVerticalBox::Slot()
-					.AutoHeight()
-					[
-						SNew(SBox)
-						.HeightOverride(TableRowH)
-						[
-							SNew(SQAACellBorder)
-							.Padding(FMargin(24.f, 5.f, 8.f, 5.f))
-							.OnDoubleClick_Raw(this, &SQuickAxisAlignPanel::OnToggleLocationAxes)
-							.ToolTipText(LOCTEXT("Loc_TT", "Copy location from target\n\nDouble-click: toggle all 3 axes"))
-							[
-								SNew(SBox)
-								.HAlign(HAlign_Fill)
-								.VAlign(VAlign_Center)
-								[
-									SNew(STextBlock)
-									.Text(LOCTEXT("LocationHeader", "Location"))
-									.Font(PanelFont)
-									.MinDesiredWidth(LabelW)
-								]
-							]
-						]
-					]
-
-					// ── Rotation label ────────────────────────────
-					+ SVerticalBox::Slot()
-					.AutoHeight()
-					[
-						SNew(SBox)
-						.HeightOverride(TableRowH)
-						[
-							SNew(SQAACellBorder)
-							.Padding(FMargin(24.f, 5.f, 8.f, 5.f))
-							.OnDoubleClick_Raw(this, &SQuickAxisAlignPanel::OnToggleRotationAxes)
-							.ToolTipText(LOCTEXT("Rot_TT", "Copy rotation from target\n\nDouble-click: toggle all 3 axes"))
-							[
-								SNew(SBox)
-								.HAlign(HAlign_Fill)
-								.VAlign(VAlign_Center)
-								[
-									SNew(STextBlock)
-									.Text(LOCTEXT("RotationHeader", "Rotation"))
-									.Font(PanelFont)
-									.MinDesiredWidth(LabelW)
-								]
-							]
-						]
-					]
-
-					// ── Scale label ────────────────────────────
-					+ SVerticalBox::Slot()
-					.AutoHeight()
-					[
-						SNew(SBox)
-						.HeightOverride(TableRowH)
-						[
-							SNew(SQAACellBorder)
-							.Padding(FMargin(24.f, 5.f, 8.f, 5.f))
-							.OnDoubleClick_Raw(this, &SQuickAxisAlignPanel::OnToggleScaleAxes)
-							.ToolTipText(LOCTEXT("Scale_TT", "Copy scale from target\n\nDouble-click: toggle all 3 axes"))
-							[
-								SNew(SBox)
-								.HAlign(HAlign_Fill)
-								.VAlign(VAlign_Center)
-								[
-									SNew(STextBlock)
-									.Text(LOCTEXT("ScaleHeader", "Scale"))
-									.Font(PanelFont)
-									.MinDesiredWidth(LabelW)
-								]
-							]
-						]
-					]
-				]
-
-				+ SSplitter::Slot()
-				[
-					SNew(SVerticalBox)
-
-					// ── Header: X  Y  Z ──────────────────────────
-					+ SVerticalBox::Slot()
-					.AutoHeight()
-					[
-						SNew(SBox)
-						.HeightOverride(TableRowH)
-						[
-							SNew(SHorizontalBox)
-
-							+ SHorizontalBox::Slot()
-							.FillWidth(1.f)
-							[
-								SNew(SQAACellBorder)
-								.Padding(FMargin(8.f, 5.f))
-								.BackgroundColor(FSlateColor(EStyleColor::Header))
-								[
-									SNew(SBox)
-									.HAlign(HAlign_Fill)
-									.VAlign(VAlign_Center)
-									[
-										SNew(STextBlock)
-										.Text(FText::FromString("X"))
-										.Font(PanelFont)
-										.ColorAndOpacity(FSlateColor::UseForeground())
-										.Justification(ETextJustify::Center)
-									]
-								]
-							]
-
-							+ SHorizontalBox::Slot()
-							.FillWidth(1.f)
-							[
-								SNew(SQAACellBorder)
-								.Padding(FMargin(8.f, 5.f))
-								.BackgroundColor(FSlateColor(EStyleColor::Header))
-								[
-									SNew(SBox)
-									.HAlign(HAlign_Fill)
-									.VAlign(VAlign_Center)
-									[
-										SNew(STextBlock)
-										.Text(FText::FromString("Y"))
-										.Font(PanelFont)
-										.ColorAndOpacity(FSlateColor::UseForeground())
-										.Justification(ETextJustify::Center)
-									]
-								]
-							]
-
-							+ SHorizontalBox::Slot()
-							.FillWidth(1.f)
-							[
-								SNew(SQAACellBorder)
-								.Padding(FMargin(8.f, 5.f))
-								.BackgroundColor(FSlateColor(EStyleColor::Header))
-								[
-									SNew(SBox)
-									.HAlign(HAlign_Fill)
-									.VAlign(VAlign_Center)
-									[
-										SNew(STextBlock)
-										.Text(FText::FromString("Z"))
-										.Font(PanelFont)
-										.ColorAndOpacity(FSlateColor::UseForeground())
-										.Justification(ETextJustify::Center)
-									]
-								]
-							]
-						]
-					]
-
-					// ── Location checkboxes ────────────────────
-					+ SVerticalBox::Slot()
-					.AutoHeight()
-					[
-						MakeAxisRow(
-							&SQuickAxisAlignPanel::GetPosXState, &SQuickAxisAlignPanel::GetPosYState, &SQuickAxisAlignPanel::GetPosZState,
-							&SQuickAxisAlignPanel::OnPosXChanged, &SQuickAxisAlignPanel::OnPosYChanged, &SQuickAxisAlignPanel::OnPosZChanged
-						)
-					]
-
-					// ── Rotation checkboxes ────────────────────
-					+ SVerticalBox::Slot()
-					.AutoHeight()
-					[
-						MakeAxisRow(
-							&SQuickAxisAlignPanel::GetRotXState, &SQuickAxisAlignPanel::GetRotYState, &SQuickAxisAlignPanel::GetRotZState,
-							&SQuickAxisAlignPanel::OnRotXChanged, &SQuickAxisAlignPanel::OnRotYChanged, &SQuickAxisAlignPanel::OnRotZChanged
-						)
-					]
-
-					// ── Scale checkboxes ───────────────────────
-					+ SVerticalBox::Slot()
-					.AutoHeight()
-					[
-						MakeAxisRow(
-							&SQuickAxisAlignPanel::GetScaleXState, &SQuickAxisAlignPanel::GetScaleYState, &SQuickAxisAlignPanel::GetScaleZState,
-							&SQuickAxisAlignPanel::OnScaleXChanged, &SQuickAxisAlignPanel::OnScaleYChanged, &SQuickAxisAlignPanel::OnScaleZChanged
-						)
-					]
-				]
-			]
-
-			// ── Spacer ───────────────────────────────────────────
+			// ── Details: Transform / Visual Align ───────────────
 			+ SVerticalBox::Slot()
 			.FillHeight(1.f)
+			.Padding(0, 8, 0, 8)
+			[
+				DetailsView
+			]
 
 			// ── Bottom bar ─────────────────────────────────────────
 			+ SVerticalBox::Slot()
@@ -416,39 +158,6 @@ namespace
 
 				+ SHorizontalBox::Slot()
 				.FillWidth(1.f)
-
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				.VAlign(VAlign_Center)
-				[
-					SNew(SButton)
-					.ContentPadding(FMargin(10.f, 4.f))
-					.OnClicked(this, &SQuickAxisAlignPanel::OnStartVisualAlign)
-					.IsEnabled(this, &SQuickAxisAlignPanel::IsVisualAlignInactive)
-					.ToolTipText(LOCTEXT("StartVisualAlignTT", "Enter Visual Align mode: click on a point of the Source, then a point of the Target"))
-					[
-						SNew(SHorizontalBox)
-
-						+ SHorizontalBox::Slot()
-						.AutoWidth()
-						.VAlign(VAlign_Center)
-						[
-							SNew(SImage)
-							.Image(FQuickAxisAlignStyle::GetBrush("QuickAxisAlign.AlignActors"))
-							.DesiredSizeOverride(FVector2D(16.f, 16.f))
-						]
-
-						+ SHorizontalBox::Slot()
-						.AutoWidth()
-						.VAlign(VAlign_Center)
-						.Padding(FMargin(6.f, 0.f, 0.f, 0.f))
-						[
-							SNew(STextBlock)
-							.Text(LOCTEXT("StartVisualAlign", "Visual Align"))
-							.Font(FAppStyle::Get().GetFontStyle("NormalText"))
-						]
-					]
-				]
 
 				+ SHorizontalBox::Slot()
 				.AutoWidth()
@@ -839,6 +548,7 @@ FReply SQuickAxisAlignPanel::OnApply()
 
 	AActor* Target = SelectedActors.Last();
 	const int32 SourceCount = SelectedActors.Num() - 1;
+	UQAAPanelSettings* Settings = PanelSettings.Get();
 
 	const FVector TargetLoc = Target->GetActorLocation();
 	const FRotator TargetRot = Target->GetActorRotation();
@@ -862,17 +572,17 @@ FReply SQuickAxisAlignPanel::OnApply()
 		FRotator NewRot = SourceRot;
 		FVector NewScale = SourceScale;
 
-		if (bPosX) NewLoc.X = TargetLoc.X;
-		if (bPosY) NewLoc.Y = TargetLoc.Y;
-		if (bPosZ) NewLoc.Z = TargetLoc.Z;
+		if (Settings && Settings->bLocationX) NewLoc.X = TargetLoc.X;
+		if (Settings && Settings->bLocationY) NewLoc.Y = TargetLoc.Y;
+		if (Settings && Settings->bLocationZ) NewLoc.Z = TargetLoc.Z;
 
-		if (bRotX) NewRot.Roll = TargetRot.Roll;
-		if (bRotY) NewRot.Pitch = TargetRot.Pitch;
-		if (bRotZ) NewRot.Yaw = TargetRot.Yaw;
+		if (Settings && Settings->bRotationX) NewRot.Roll = TargetRot.Roll;
+		if (Settings && Settings->bRotationY) NewRot.Pitch = TargetRot.Pitch;
+		if (Settings && Settings->bRotationZ) NewRot.Yaw = TargetRot.Yaw;
 
-		if (bScaleX) NewScale.X = TargetScale.X;
-		if (bScaleY) NewScale.Y = TargetScale.Y;
-		if (bScaleZ) NewScale.Z = TargetScale.Z;
+		if (Settings && Settings->bScaleX) NewScale.X = TargetScale.X;
+		if (Settings && Settings->bScaleY) NewScale.Y = TargetScale.Y;
+		if (Settings && Settings->bScaleZ) NewScale.Z = TargetScale.Z;
 
 		Source->Modify();
 

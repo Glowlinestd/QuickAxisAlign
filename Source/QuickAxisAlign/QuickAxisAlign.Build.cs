@@ -28,6 +28,7 @@ public class QuickAxisAlign : ModuleRules
 				"LevelEditor",
 				"ToolMenus",
 				"Projects",
+				"PropertyEditor",
 			}
 		);
 	}

@@ -1,6 +1,9 @@
 #pragma once
 
+#include "UObject/StrongObjectPtr.h"
 #include "Widgets/SCompoundWidget.h"
+
+class UQAAPanelSettings;
 
 class SQuickAxisAlignPanel : public SCompoundWidget
 {
@@ -38,6 +41,7 @@ private:
 	EVisibility GetInfoVisibility() const;
 
 	FText FeedbackText;
+	TStrongObjectPtr<UQAAPanelSettings> PanelSettings;
 
 	// Position
 	void OnPosXChanged(ECheckBoxState NewState);
