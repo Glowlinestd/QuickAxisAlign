@@ -13,16 +13,53 @@
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/SOverlay.h"
 #include "Widgets/SBoxPanel.h"
+#include "Widgets/SQAACellBorder.h"
 #include "Widgets/Text/STextBlock.h"
+
+#define LOCTEXT_NAMESPACE "QAAPanelSettingsCustomization"
 
 namespace
 {
-	TSharedRef<SWidget> MakeAxisText(const FText& Text, const IDetailLayoutBuilder& DetailBuilder)
+	TSharedRef<SWidget> MakeAxisText(const FText& Text, const FText& Tooltip, const IDetailLayoutBuilder& DetailBuilder)
 	{
 		return SNew(STextBlock)
 			.Text(Text)
+			.ToolTipText(Tooltip)
 			.Justification(ETextJustify::Center)
 			.Font(DetailBuilder.GetDetailFont());
+	}
+
+	TSharedRef<SWidget> MakeToggleNameContent(const FText& Text, const FText& Tooltip, TWeakObjectPtr<UQAAPanelSettings> Settings,
+		bool UQAAPanelSettings::* MemX, bool UQAAPanelSettings::* MemY, bool UQAAPanelSettings::* MemZ,
+		const IDetailLayoutBuilder& DetailBuilder)
+	{
+		return SNew(SQAACellBorder)
+			.BorderColor(FSlateColor(FLinearColor::Transparent))
+			.BackgroundColor(FSlateColor(FLinearColor::Transparent))
+			.Thickness(0.f)
+			.Padding(0.f)
+			.ToolTipText(Tooltip)
+			.OnDoubleClick_Lambda([Settings, MemX, MemY, MemZ]()
+			{
+				if (!Settings.IsValid()) return FReply::Unhandled();
+				bool bAllOn = Settings.Get()->*MemX && Settings.Get()->*MemY && Settings.Get()->*MemZ;
+				bool bNew = !bAllOn;
+				Settings.Get()->*MemX = bNew;
+				Settings.Get()->*MemY = bNew;
+				Settings.Get()->*MemZ = bNew;
+				return FReply::Handled();
+			})
+			[
+				SNew(SOverlay)
+				+ SOverlay::Slot()
+				.HAlign(HAlign_Left)
+				.VAlign(VAlign_Center)
+				[
+					SNew(STextBlock)
+					.Text(Text)
+					.Font(DetailBuilder.GetDetailFont())
+				]
+			];
 	}
 
 	TSharedRef<SWidget> MakeHeaderRowCell(TSharedRef<SWidget> Content)
@@ -44,12 +81,13 @@ namespace
 			];
 	}
 
-	TSharedRef<SWidget> MakeLocationCheckBox(TWeakObjectPtr<UQAAPanelSettings> Settings, bool UQAAPanelSettings::* Member)
+	TSharedRef<SWidget> MakeAxisCheckBox(TWeakObjectPtr<UQAAPanelSettings> Settings, bool UQAAPanelSettings::* Member, const FText& Tooltip)
 	{
 		return SNew(SBox)
 			.HAlign(HAlign_Center)
 			[
 				SNew(SCheckBox)
+				.ToolTipText(Tooltip)
 				.IsChecked_Lambda([Settings, Member]()
 				{
 					return Settings.IsValid() && Settings.Get()->*Member ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
@@ -112,28 +150,32 @@ void FQAAPanelSettingsCustomization::CustomizeDetails(IDetailLayoutBuilder& Deta
 			.FillWidth(1.f)
 			.VAlign(VAlign_Center)
 			[
-				MakeAxisText(FText::FromString(TEXT("X")), DetailBuilder)
+				MakeAxisText(FText::FromString(TEXT("X")), LOCTEXT("XAxisTT", "Apply to X axis"), DetailBuilder)
 			]
 			+ SHorizontalBox::Slot()
 			.FillWidth(1.f)
 			.VAlign(VAlign_Center)
 			[
-				MakeAxisText(FText::FromString(TEXT("Y")), DetailBuilder)
+				MakeAxisText(FText::FromString(TEXT("Y")), LOCTEXT("YAxisTT", "Apply to Y axis"), DetailBuilder)
 			]
 			+ SHorizontalBox::Slot()
 			.FillWidth(1.f)
 			.VAlign(VAlign_Center)
 			[
-				MakeAxisText(FText::FromString(TEXT("Z")), DetailBuilder)
+				MakeAxisText(FText::FromString(TEXT("Z")), LOCTEXT("ZAxisTT", "Apply to Z axis"), DetailBuilder)
 			])
 	];
 
 	TransformCategory.AddCustomRow(FText::FromString(TEXT("Location")))
 	.NameContent()
+	.HAlign(HAlign_Fill)
+	.VAlign(VAlign_Fill)
 	[
-		SNew(STextBlock)
-		.Text(FText::FromString(TEXT("Location")))
-		.Font(DetailBuilder.GetDetailFont())
+		MakeToggleNameContent(FText::FromString(TEXT("Location")), LOCTEXT("LocationToggleTT", "Double-click to toggle all Location axes"), Settings,
+			&UQAAPanelSettings::bLocationX,
+			&UQAAPanelSettings::bLocationY,
+			&UQAAPanelSettings::bLocationZ,
+			DetailBuilder)
 	]
 	.ValueContent()
 	.HAlign(HAlign_Fill)
@@ -144,26 +186,30 @@ void FQAAPanelSettingsCustomization::CustomizeDetails(IDetailLayoutBuilder& Deta
 		+ SHorizontalBox::Slot()
 		.FillWidth(1.f)
 		[
-			MakeLocationCheckBox(Settings, &UQAAPanelSettings::bLocationX)
+			MakeAxisCheckBox(Settings, &UQAAPanelSettings::bLocationX, LOCTEXT("LocationXTT", "Apply Target Location X to Sources"))
 		]
 		+ SHorizontalBox::Slot()
 		.FillWidth(1.f)
 		[
-			MakeLocationCheckBox(Settings, &UQAAPanelSettings::bLocationY)
+			MakeAxisCheckBox(Settings, &UQAAPanelSettings::bLocationY, LOCTEXT("LocationYTT", "Apply Target Location Y to Sources"))
 		]
 		+ SHorizontalBox::Slot()
 		.FillWidth(1.f)
 		[
-			MakeLocationCheckBox(Settings, &UQAAPanelSettings::bLocationZ)
+			MakeAxisCheckBox(Settings, &UQAAPanelSettings::bLocationZ, LOCTEXT("LocationZTT", "Apply Target Location Z to Sources"))
 		]
 	];
 
 	TransformCategory.AddCustomRow(FText::FromString(TEXT("Rotation")))
 	.NameContent()
+	.HAlign(HAlign_Fill)
+	.VAlign(VAlign_Fill)
 	[
-		SNew(STextBlock)
-		.Text(FText::FromString(TEXT("Rotation")))
-		.Font(DetailBuilder.GetDetailFont())
+		MakeToggleNameContent(FText::FromString(TEXT("Rotation")), LOCTEXT("RotationToggleTT", "Double-click to toggle all Rotation axes"), Settings,
+			&UQAAPanelSettings::bRotationX,
+			&UQAAPanelSettings::bRotationY,
+			&UQAAPanelSettings::bRotationZ,
+			DetailBuilder)
 	]
 	.ValueContent()
 	.HAlign(HAlign_Fill)
@@ -174,26 +220,30 @@ void FQAAPanelSettingsCustomization::CustomizeDetails(IDetailLayoutBuilder& Deta
 		+ SHorizontalBox::Slot()
 		.FillWidth(1.f)
 		[
-			MakeLocationCheckBox(Settings, &UQAAPanelSettings::bRotationX)
+			MakeAxisCheckBox(Settings, &UQAAPanelSettings::bRotationX, LOCTEXT("RotationXTT", "Apply Target Rotation X to Sources"))
 		]
 		+ SHorizontalBox::Slot()
 		.FillWidth(1.f)
 		[
-			MakeLocationCheckBox(Settings, &UQAAPanelSettings::bRotationY)
+			MakeAxisCheckBox(Settings, &UQAAPanelSettings::bRotationY, LOCTEXT("RotationYTT", "Apply Target Rotation Y to Sources"))
 		]
 		+ SHorizontalBox::Slot()
 		.FillWidth(1.f)
 		[
-			MakeLocationCheckBox(Settings, &UQAAPanelSettings::bRotationZ)
+			MakeAxisCheckBox(Settings, &UQAAPanelSettings::bRotationZ, LOCTEXT("RotationZTT", "Apply Target Rotation Z to Sources"))
 		]
 	];
 
 	TransformCategory.AddCustomRow(FText::FromString(TEXT("Scale")))
 	.NameContent()
+	.HAlign(HAlign_Fill)
+	.VAlign(VAlign_Fill)
 	[
-		SNew(STextBlock)
-		.Text(FText::FromString(TEXT("Scale")))
-		.Font(DetailBuilder.GetDetailFont())
+		MakeToggleNameContent(FText::FromString(TEXT("Scale")), LOCTEXT("ScaleToggleTT", "Double-click to toggle all Scale axes"), Settings,
+			&UQAAPanelSettings::bScaleX,
+			&UQAAPanelSettings::bScaleY,
+			&UQAAPanelSettings::bScaleZ,
+			DetailBuilder)
 	]
 	.ValueContent()
 	.HAlign(HAlign_Fill)
@@ -204,17 +254,17 @@ void FQAAPanelSettingsCustomization::CustomizeDetails(IDetailLayoutBuilder& Deta
 		+ SHorizontalBox::Slot()
 		.FillWidth(1.f)
 		[
-			MakeLocationCheckBox(Settings, &UQAAPanelSettings::bScaleX)
+			MakeAxisCheckBox(Settings, &UQAAPanelSettings::bScaleX, LOCTEXT("ScaleXTT", "Apply Target Scale X to Sources"))
 		]
 		+ SHorizontalBox::Slot()
 		.FillWidth(1.f)
 		[
-			MakeLocationCheckBox(Settings, &UQAAPanelSettings::bScaleY)
+			MakeAxisCheckBox(Settings, &UQAAPanelSettings::bScaleY, LOCTEXT("ScaleYTT", "Apply Target Scale Y to Sources"))
 		]
 		+ SHorizontalBox::Slot()
 		.FillWidth(1.f)
 		[
-			MakeLocationCheckBox(Settings, &UQAAPanelSettings::bScaleZ)
+			MakeAxisCheckBox(Settings, &UQAAPanelSettings::bScaleZ, LOCTEXT("ScaleZTT", "Apply Target Scale Z to Sources"))
 		]
 	];
 
@@ -225,54 +275,77 @@ void FQAAPanelSettingsCustomization::CustomizeDetails(IDetailLayoutBuilder& Deta
 
 	VisualAlignCategory.AddCustomRow(FText::FromString(TEXT("Mode")))
 	.NameContent()
+	.HAlign(HAlign_Fill)
+	.VAlign(VAlign_Fill)
 	[
-		SNew(STextBlock)
-		.Text(FText::FromString(TEXT("Mode")))
-		.Font(DetailBuilder.GetDetailFont())
-	]
-	.ValueContent()
-	[
-		VisualAlignModeHandle->CreatePropertyValueWidget()
-	];
-
-	VisualAlignCategory.AddCustomRow(FText::FromString(TEXT("Visual Align Button")))
-	.NameContent()
-	[
-		SNew(STextBlock)
-		.Text(FText::GetEmpty())
-		.Font(DetailBuilder.GetDetailFont())
-	]
-	.ValueContent()
-	[
-		SNew(SButton)
-		.ContentPadding(FMargin(6.f, 2.f))
-		.OnClicked_Lambda([]()
-		{
-			FQuickAxisAlignModule::Get().StartVisualAlignSession();
-			return FReply::Handled();
-		})
+		SNew(SQAACellBorder)
+		.BorderColor(FSlateColor(FLinearColor::Transparent))
+		.BackgroundColor(FSlateColor(FLinearColor::Transparent))
+		.Thickness(0.f)
+		.Padding(0.f)
+		.ToolTipText(LOCTEXT("ModeTT", "Controls whether sources are moved and rotated, or moved only"))
 		[
-			SNew(SHorizontalBox)
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
+			SNew(SOverlay)
+			+ SOverlay::Slot()
+			.HAlign(HAlign_Left)
 			.VAlign(VAlign_Center)
-			[
-				SNew(SBox)
-				.WidthOverride(16.f)
-				.HeightOverride(16.f)
-				[
-					SNew(SImage)
-					.Image(FQuickAxisAlignStyle::GetBrush("QuickAxisAlign.AlignActors"))
-				]
-			]
-			+ SHorizontalBox::Slot()
-			.AutoWidth()
-			.VAlign(VAlign_Center)
-			.Padding(4.f, 0.f, 0.f, 0.f)
 			[
 				SNew(STextBlock)
-				.Text(FText::FromString(TEXT("Use Visual Align")))
+				.Text(FText::FromString(TEXT("Mode")))
+				.Font(DetailBuilder.GetDetailFont())
+			]
+		]
+	]
+	.ValueContent()
+	.VAlign(VAlign_Center)
+	[
+		SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		[
+			SNew(SBox)
+			.WidthOverride(150.f)
+			[
+				VisualAlignModeHandle->CreatePropertyValueWidget()
+			]
+		]
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		.Padding(8.f, 0.f, 0.f, 0.f)
+		[
+			SNew(SButton)
+			.ContentPadding(FMargin(6.f, 2.f))
+			.ToolTipText(LOCTEXT("VisualAlignTT", "Start Visual Align mode to pick source and target points in the viewport"))
+			.OnClicked_Lambda([]()
+			{
+				FQuickAxisAlignModule::Get().StartVisualAlignSession();
+				return FReply::Handled();
+			})
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.VAlign(VAlign_Center)
+				[
+					SNew(SBox)
+					.WidthOverride(16.f)
+					.HeightOverride(16.f)
+					[
+						SNew(SImage)
+						.Image(FQuickAxisAlignStyle::GetBrush("QuickAxisAlign.AlignActors"))
+					]
+				]
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.VAlign(VAlign_Center)
+				.Padding(4.f, 0.f, 0.f, 0.f)
+				[
+					SNew(STextBlock)
+					.Text(FText::FromString(TEXT("Use Visual Align")))
+				]
 			]
 		]
 	];
 }
+
+#undef LOCTEXT_NAMESPACE

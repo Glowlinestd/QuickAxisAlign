@@ -18,13 +18,13 @@ class UQAAPanelSettings : public UObject
 
 public:
 	UPROPERTY(EditAnywhere, Category = "Transform")
-	bool bLocationX = false;
+	bool bLocationX = true;
 
 	UPROPERTY(EditAnywhere, Category = "Transform")
-	bool bLocationY = false;
+	bool bLocationY = true;
 
 	UPROPERTY(EditAnywhere, Category = "Transform")
-	bool bLocationZ = false;
+	bool bLocationZ = true;
 
 	UPROPERTY(EditAnywhere, Category = "Transform")
 	bool bRotationX = false;

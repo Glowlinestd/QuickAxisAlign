@@ -532,7 +532,6 @@ FReply SQuickAxisAlignPanel::OnApply()
 	if (IsVisualAlignReady())
 	{
 		FQuickAxisAlignModule::Get().ApplyVisualAlign();
-		FeedbackText = LOCTEXT("VisualAlignDone", "Visual align applied");
 		return FReply::Handled();
 	}
 
