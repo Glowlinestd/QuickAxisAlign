@@ -8,13 +8,14 @@
 #include "QAAVisualAlignEdMode.h"
 #include "QAAPanelSettings.h"
 
-#include "ToolMenus.h"
 #include "Framework/Docking/TabManager.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "EditorModeManager.h"
 #include "EditorModeRegistry.h"
 #include "PropertyEditorModule.h"
 #include "LevelEditor.h"
+#include "WorkspaceMenuStructure.h"
+#include "WorkspaceMenuStructureModule.h"
 
 #define LOCTEXT_NAMESPACE "FQuickAxisAlignModule"
 
@@ -46,8 +47,6 @@ void FQuickAxisAlignModule::StartupModule()
 		FCanExecuteAction()
 	);
 
-	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FQuickAxisAlignModule::RegisterMenus));
-
 	{
 		FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
 		LevelEditorModule.GetGlobalLevelEditorActions()->Append(CommandList.ToSharedRef());
@@ -63,6 +62,7 @@ void FQuickAxisAlignModule::StartupModule()
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(QuickAxisAlignTabName, FOnSpawnTab::CreateRaw(this, &FQuickAxisAlignModule::SpawnTab))
 		.SetDisplayName(LOCTEXT("QuickAxisAlignTabTitle", "Quick Axis Align"))
 		.SetTooltipText(LOCTEXT("QuickAxisAlignTabTooltip", "Align actors by copying coordinates."))
+		.SetGroup(WorkspaceMenu::GetMenuStructure().GetToolsCategory())
 		.SetIcon(FSlateIcon(FQuickAxisAlignStyle::GetStyleSetName(), "QuickAxisAlign.AlignActors"));
 
 }
@@ -72,8 +72,6 @@ void FQuickAxisAlignModule::ShutdownModule()
 	FEditorModeRegistry::Get().UnregisterMode(FQAAVisualAlignEdMode::EM_QAAVisualAlignEdModeId);
 
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(QuickAxisAlignTabName);
-
-	UToolMenus::UnRegisterStartupCallback(this);
 
 	if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
 	{
@@ -93,37 +91,6 @@ TSharedRef<SDockTab> FQuickAxisAlignModule::SpawnTab(const FSpawnTabArgs& Args)
 		[
 			SNew(SQuickAxisAlignPanel)
 		];
-}
-
-void FQuickAxisAlignModule::RegisterMenus()
-{
-	UE_LOG(LogTemp, Log, TEXT("QuickAxisAlign: RegisterMenus"));
-
-	UToolMenus* ToolMenus = UToolMenus::Get();
-	if (!ToolMenus)
-	{
-		UE_LOG(LogTemp, Error, TEXT("QuickAxisAlign: UToolMenus not available"));
-		return;
-	}
-
-	UToolMenu* ToolbarMenu = ToolMenus->ExtendMenu("LevelEditor.LevelEditorToolBar.User");
-	if (!ToolbarMenu)
-	{
-		UE_LOG(LogTemp, Error, TEXT("QuickAxisAlign: Could not extend LevelEditor.LevelEditorToolBar"));
-		return;
-	}
-
-	FToolMenuSection& Section = ToolbarMenu->AddSection("QuickAxisAlign", LOCTEXT("QuickAxisAlignSection", "Quick Axis Align"));
-
-	Section.AddEntry(FToolMenuEntry::InitToolBarButton(
-		"QuickAxisAlign_Align",
-		FUIAction(FExecuteAction::CreateRaw(this, &FQuickAxisAlignModule::AlignSelectedActors)),
-		LOCTEXT("AlignActorsLabel", "Align"),
-		LOCTEXT("AlignActorsTooltip", "Quick Axis Align: alinear el primer actor seleccionado a la posicion del segundo"),
-		FSlateIcon(FQuickAxisAlignStyle::GetStyleSetName(), "QuickAxisAlign.AlignActors")
-	));
-
-	UE_LOG(LogTemp, Log, TEXT("QuickAxisAlign: Button added to toolbar!"));
 }
 
 void FQuickAxisAlignModule::AlignSelectedActors()
