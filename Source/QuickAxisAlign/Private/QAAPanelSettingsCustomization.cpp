@@ -9,7 +9,9 @@
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Input/SCheckBox.h"
 #include "Widgets/Images/SImage.h"
+#include "Widgets/Colors/SColorBlock.h"
 #include "Widgets/Layout/SBox.h"
+#include "Widgets/SOverlay.h"
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/Text/STextBlock.h"
 
@@ -21,6 +23,25 @@ namespace
 			.Text(Text)
 			.Justification(ETextJustify::Center)
 			.Font(DetailBuilder.GetDetailFont());
+	}
+
+	TSharedRef<SWidget> MakeHeaderRowCell(TSharedRef<SWidget> Content)
+	{
+		return SNew(SOverlay)
+			+ SOverlay::Slot()
+			.Padding(FMargin(-12.f, 0.f, -2.f, 0.f))
+			.VAlign(VAlign_Fill)
+			.HAlign(HAlign_Fill)
+			[
+				SNew(SColorBlock)
+				.Color_Lambda([]() { return FSlateColor(EStyleColor::Header).GetSpecifiedColor(); })
+			]
+			+ SOverlay::Slot()
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Center)
+			[
+				Content
+			];
 	}
 
 	TSharedRef<SWidget> MakeLocationCheckBox(TWeakObjectPtr<UQAAPanelSettings> Settings, bool UQAAPanelSettings::* Member)
@@ -81,25 +102,30 @@ void FQAAPanelSettingsCustomization::CustomizeDetails(IDetailLayoutBuilder& Deta
 	]
 	.ValueContent()
 	.HAlign(HAlign_Fill)
+	.VAlign(VAlign_Fill)
 	.MinDesiredWidth(160.f)
 	.MaxDesiredWidth(TOptional<float>())
 	[
-		SNew(SHorizontalBox)
-		+ SHorizontalBox::Slot()
-		.FillWidth(1.f)
-		[
-			MakeAxisText(FText::FromString(TEXT("X")), DetailBuilder)
-		]
-		+ SHorizontalBox::Slot()
-		.FillWidth(1.f)
-		[
-			MakeAxisText(FText::FromString(TEXT("Y")), DetailBuilder)
-		]
-		+ SHorizontalBox::Slot()
-		.FillWidth(1.f)
-		[
-			MakeAxisText(FText::FromString(TEXT("Z")), DetailBuilder)
-		]
+		MakeHeaderRowCell(
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+			.FillWidth(1.f)
+			.VAlign(VAlign_Center)
+			[
+				MakeAxisText(FText::FromString(TEXT("X")), DetailBuilder)
+			]
+			+ SHorizontalBox::Slot()
+			.FillWidth(1.f)
+			.VAlign(VAlign_Center)
+			[
+				MakeAxisText(FText::FromString(TEXT("Y")), DetailBuilder)
+			]
+			+ SHorizontalBox::Slot()
+			.FillWidth(1.f)
+			.VAlign(VAlign_Center)
+			[
+				MakeAxisText(FText::FromString(TEXT("Z")), DetailBuilder)
+			])
 	];
 
 	TransformCategory.AddCustomRow(FText::FromString(TEXT("Location")))
