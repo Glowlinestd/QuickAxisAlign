@@ -47,6 +47,7 @@ namespace
 				Settings.Get()->*MemX = bNew;
 				Settings.Get()->*MemY = bNew;
 				Settings.Get()->*MemZ = bNew;
+				Settings->SaveConfig();
 				return FReply::Handled();
 			})
 			[
@@ -97,6 +98,7 @@ namespace
 					if (Settings.IsValid())
 					{
 						Settings.Get()->*Member = (NewState == ECheckBoxState::Checked);
+						Settings->SaveConfig();
 					}
 				})
 			];
@@ -272,6 +274,14 @@ void FQAAPanelSettingsCustomization::CustomizeDetails(IDetailLayoutBuilder& Deta
 
 	TSharedPtr<IPropertyHandle> VisualAlignModeHandle = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UQAAPanelSettings, VisualAlignMode));
 	DetailBuilder.HideProperty(GET_MEMBER_NAME_CHECKED(UQAAPanelSettings, VisualAlignMode));
+
+	VisualAlignModeHandle->SetOnPropertyValueChanged(FSimpleDelegate::CreateLambda([Settings]()
+	{
+		if (Settings.IsValid())
+		{
+			Settings->SaveConfig();
+		}
+	}));
 
 	VisualAlignCategory.AddCustomRow(FText::FromString(TEXT("Mode")))
 	.NameContent()

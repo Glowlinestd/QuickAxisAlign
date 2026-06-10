@@ -11,39 +11,39 @@ enum class EVisualAlignMode : uint8
 	MoveOnly UMETA(DisplayName = "Move objects only"),
 };
 
-UCLASS()
+UCLASS(Config = QuickAxisAlign, DefaultConfig)
 class UQAAPanelSettings : public UObject
 {
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, Category = "Transform")
+	UPROPERTY(EditAnywhere, Config, Category = "Transform")
 	bool bLocationX = true;
 
-	UPROPERTY(EditAnywhere, Category = "Transform")
+	UPROPERTY(EditAnywhere, Config, Category = "Transform")
 	bool bLocationY = true;
 
-	UPROPERTY(EditAnywhere, Category = "Transform")
+	UPROPERTY(EditAnywhere, Config, Category = "Transform")
 	bool bLocationZ = true;
 
-	UPROPERTY(EditAnywhere, Category = "Transform")
+	UPROPERTY(EditAnywhere, Config, Category = "Transform")
 	bool bRotationX = false;
 
-	UPROPERTY(EditAnywhere, Category = "Transform")
+	UPROPERTY(EditAnywhere, Config, Category = "Transform")
 	bool bRotationY = false;
 
-	UPROPERTY(EditAnywhere, Category = "Transform")
+	UPROPERTY(EditAnywhere, Config, Category = "Transform")
 	bool bRotationZ = false;
 
-	UPROPERTY(EditAnywhere, Category = "Transform")
+	UPROPERTY(EditAnywhere, Config, Category = "Transform")
 	bool bScaleX = false;
 
-	UPROPERTY(EditAnywhere, Category = "Transform")
+	UPROPERTY(EditAnywhere, Config, Category = "Transform")
 	bool bScaleY = false;
 
-	UPROPERTY(EditAnywhere, Category = "Transform")
+	UPROPERTY(EditAnywhere, Config, Category = "Transform")
 	bool bScaleZ = false;
 
-	UPROPERTY(EditAnywhere, Category = "Visual Align")
+	UPROPERTY(EditAnywhere, Config, Category = "Visual Align")
 	EVisualAlignMode VisualAlignMode = EVisualAlignMode::MoveAndRotate;
 };

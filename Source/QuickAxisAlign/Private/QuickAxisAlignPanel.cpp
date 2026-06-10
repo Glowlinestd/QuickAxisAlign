@@ -39,11 +39,7 @@ namespace
 
 	void SQuickAxisAlignPanel::Construct(const FArguments& InArgs)
 	{
-		bPosX = bPosY = bPosZ = false;
-		bRotX = bRotY = bRotZ = false;
-		bScaleX = bScaleY = bScaleZ = false;
-
-		PanelSettings.Reset(NewObject<UQAAPanelSettings>(GetTransientPackage(), NAME_None, RF_Transient));
+		PanelSettings.Reset(GetMutableDefault<UQAAPanelSettings>());
 
 		FPropertyEditorModule& PropertyEditorModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 
@@ -400,128 +396,6 @@ EVisibility SQuickAxisAlignPanel::GetInfoVisibility() const
 	const FString S = T.ToString();
 	if (S.IsEmpty() || S == TEXT(" ")) return EVisibility::Collapsed;
 	return EVisibility::HitTestInvisible;
-}
-
-// ── Location ───────────────────────────────────────────────
-
-void SQuickAxisAlignPanel::OnPosXChanged(ECheckBoxState NewState)
-{
-	bPosX = (NewState == ECheckBoxState::Checked);
-}
-
-void SQuickAxisAlignPanel::OnPosYChanged(ECheckBoxState NewState)
-{
-	bPosY = (NewState == ECheckBoxState::Checked);
-}
-
-void SQuickAxisAlignPanel::OnPosZChanged(ECheckBoxState NewState)
-{
-	bPosZ = (NewState == ECheckBoxState::Checked);
-}
-
-ECheckBoxState SQuickAxisAlignPanel::GetPosXState() const
-{
-	return bPosX ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
-}
-
-ECheckBoxState SQuickAxisAlignPanel::GetPosYState() const
-{
-	return bPosY ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
-}
-
-ECheckBoxState SQuickAxisAlignPanel::GetPosZState() const
-{
-	return bPosZ ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
-}
-
-// ── Rotation ───────────────────────────────────────────────
-
-void SQuickAxisAlignPanel::OnRotXChanged(ECheckBoxState NewState)
-{
-	bRotX = (NewState == ECheckBoxState::Checked);
-}
-
-void SQuickAxisAlignPanel::OnRotYChanged(ECheckBoxState NewState)
-{
-	bRotY = (NewState == ECheckBoxState::Checked);
-}
-
-void SQuickAxisAlignPanel::OnRotZChanged(ECheckBoxState NewState)
-{
-	bRotZ = (NewState == ECheckBoxState::Checked);
-}
-
-ECheckBoxState SQuickAxisAlignPanel::GetRotXState() const
-{
-	return bRotX ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
-}
-
-ECheckBoxState SQuickAxisAlignPanel::GetRotYState() const
-{
-	return bRotY ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
-}
-
-ECheckBoxState SQuickAxisAlignPanel::GetRotZState() const
-{
-	return bRotZ ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
-}
-
-// ── Scale ──────────────────────────────────────────────────
-
-void SQuickAxisAlignPanel::OnScaleXChanged(ECheckBoxState NewState)
-{
-	bScaleX = (NewState == ECheckBoxState::Checked);
-}
-
-void SQuickAxisAlignPanel::OnScaleYChanged(ECheckBoxState NewState)
-{
-	bScaleY = (NewState == ECheckBoxState::Checked);
-}
-
-void SQuickAxisAlignPanel::OnScaleZChanged(ECheckBoxState NewState)
-{
-	bScaleZ = (NewState == ECheckBoxState::Checked);
-}
-
-ECheckBoxState SQuickAxisAlignPanel::GetScaleXState() const
-{
-	return bScaleX ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
-}
-
-ECheckBoxState SQuickAxisAlignPanel::GetScaleYState() const
-{
-	return bScaleY ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
-}
-
-ECheckBoxState SQuickAxisAlignPanel::GetScaleZState() const
-{
-	return bScaleZ ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
-}
-
-// ── Row toggle (double-click on row label) ─────────────────
-
-FReply SQuickAxisAlignPanel::OnToggleLocationAxes()
-{
-	const bool bAllChecked = bPosX && bPosY && bPosZ;
-	const bool bNewState = !bAllChecked;
-	bPosX = bPosY = bPosZ = bNewState;
-	return FReply::Handled();
-}
-
-FReply SQuickAxisAlignPanel::OnToggleRotationAxes()
-{
-	const bool bAllChecked = bRotX && bRotY && bRotZ;
-	const bool bNewState = !bAllChecked;
-	bRotX = bRotY = bRotZ = bNewState;
-	return FReply::Handled();
-}
-
-FReply SQuickAxisAlignPanel::OnToggleScaleAxes()
-{
-	const bool bAllChecked = bScaleX && bScaleY && bScaleZ;
-	const bool bNewState = !bAllChecked;
-	bScaleX = bScaleY = bScaleZ = bNewState;
-	return FReply::Handled();
 }
 
 // ── Apply ──────────────────────────────────────────────────
