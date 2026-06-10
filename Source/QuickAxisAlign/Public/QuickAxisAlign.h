@@ -20,6 +20,7 @@ public:
 	void CancelVisualAlign();
 
 private:
+	void RegisterMenus();
 	TSharedRef<SDockTab> SpawnTab(const FSpawnTabArgs& Args);
 	void AlignSelectedActors();
 

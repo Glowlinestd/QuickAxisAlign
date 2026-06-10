@@ -9,6 +9,7 @@
 #include "QAAPanelSettings.h"
 
 #include "Framework/Docking/TabManager.h"
+#include "ToolMenus.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "EditorModeManager.h"
 #include "EditorModeRegistry.h"
@@ -59,6 +60,8 @@ void FQuickAxisAlignModule::StartupModule()
 		true
 	);
 
+	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FQuickAxisAlignModule::RegisterMenus));
+
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(QuickAxisAlignTabName, FOnSpawnTab::CreateRaw(this, &FQuickAxisAlignModule::SpawnTab))
 		.SetDisplayName(LOCTEXT("QuickAxisAlignTabTitle", "Quick Axis Align"))
 		.SetTooltipText(LOCTEXT("QuickAxisAlignTabTooltip", "Align actors by copying coordinates."))
@@ -72,6 +75,8 @@ void FQuickAxisAlignModule::ShutdownModule()
 	FEditorModeRegistry::Get().UnregisterMode(FQAAVisualAlignEdMode::EM_QAAVisualAlignEdModeId);
 
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(QuickAxisAlignTabName);
+
+	UToolMenus::UnRegisterStartupCallback(this);
 
 	if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
 	{
@@ -91,6 +96,24 @@ TSharedRef<SDockTab> FQuickAxisAlignModule::SpawnTab(const FSpawnTabArgs& Args)
 		[
 			SNew(SQuickAxisAlignPanel)
 		];
+}
+
+void FQuickAxisAlignModule::RegisterMenus()
+{
+	UToolMenus* ToolMenus = UToolMenus::Get();
+	if (!ToolMenus) return;
+
+	UToolMenu* ToolsMenu = ToolMenus->ExtendMenu("LevelEditor.MainMenu.Tools");
+	FToolMenuSection& Section = ToolsMenu->AddSection("QuickAxisAlign", LOCTEXT("QuickAxisAlignSection", "Quick Axis Align"));
+
+	FToolMenuEntry& MenuEntry = Section.AddMenuEntry(
+		"QuickAxisAlign_VisualAlign",
+		FQuickAxisAlignCommands::Get().StartVisualAlign,
+		LOCTEXT("VisualAlignMenuLabel", "Visual Align"),
+		LOCTEXT("VisualAlignMenuTooltip", "Start Visual Align mode to pick source and target points in the viewport"),
+		FSlateIcon(FQuickAxisAlignStyle::GetStyleSetName(), "QuickAxisAlign.AlignActors")
+	);
+	MenuEntry.SetCommandList(CommandList);
 }
 
 void FQuickAxisAlignModule::AlignSelectedActors()
