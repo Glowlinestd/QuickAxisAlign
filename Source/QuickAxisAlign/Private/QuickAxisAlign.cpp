@@ -15,8 +15,6 @@
 #include "EditorModeRegistry.h"
 #include "PropertyEditorModule.h"
 #include "LevelEditor.h"
-#include "WorkspaceMenuStructure.h"
-#include "WorkspaceMenuStructureModule.h"
 
 #define LOCTEXT_NAMESPACE "FQuickAxisAlignModule"
 
@@ -65,7 +63,7 @@ void FQuickAxisAlignModule::StartupModule()
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(QuickAxisAlignTabName, FOnSpawnTab::CreateRaw(this, &FQuickAxisAlignModule::SpawnTab))
 		.SetDisplayName(LOCTEXT("QuickAxisAlignTabTitle", "Quick Axis Align"))
 		.SetTooltipText(LOCTEXT("QuickAxisAlignTabTooltip", "Align actors by copying coordinates."))
-		.SetGroup(WorkspaceMenu::GetMenuStructure().GetToolsCategory())
+		.SetMenuType(ETabSpawnerMenuType::Hidden)
 		.SetIcon(FSlateIcon(FQuickAxisAlignStyle::GetStyleSetName(), "QuickAxisAlign.AlignActors"));
 
 }
@@ -105,6 +103,17 @@ void FQuickAxisAlignModule::RegisterMenus()
 
 	UToolMenu* ToolsMenu = ToolMenus->ExtendMenu("LevelEditor.MainMenu.Tools");
 	FToolMenuSection& Section = ToolsMenu->AddSection("QuickAxisAlign", LOCTEXT("QuickAxisAlignSection", "Quick Axis Align"));
+
+	Section.AddMenuEntry(
+		"QuickAxisAlign_OpenPanel",
+		LOCTEXT("QuickAxisAlignTabTitle", "Quick Axis Align"),
+		LOCTEXT("QuickAxisAlignTabTooltip", "Align actors by copying coordinates."),
+		FSlateIcon(FQuickAxisAlignStyle::GetStyleSetName(), "QuickAxisAlign.AlignActors"),
+		FToolUIActionChoice(FUIAction(FExecuteAction::CreateLambda([]()
+			{
+				FGlobalTabmanager::Get()->TryInvokeTab(QuickAxisAlignTabName);
+			})))
+	);
 
 	FToolMenuEntry& MenuEntry = Section.AddMenuEntry(
 		"QuickAxisAlign_VisualAlign",
