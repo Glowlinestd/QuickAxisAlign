@@ -344,7 +344,7 @@ FText SQuickAxisAlignPanel::GetInstructionText() const
 
 	if (Sel->Num() < 2)
 	{
-		return LOCTEXT("Instr_SelectTwoPlus", "Select 2+ actors in the viewport (last selected = Target)");
+		return LOCTEXT("Instr_SelectTwoPlus", "Transform requires 2+ actors selected (last selected = Target)");
 	}
 	return FText::FromString(" ");
 }

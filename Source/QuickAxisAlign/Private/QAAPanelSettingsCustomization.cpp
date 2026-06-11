@@ -327,7 +327,7 @@ void FQAAPanelSettingsCustomization::CustomizeDetails(IDetailLayoutBuilder& Deta
 			SNew(SButton)
 			.ButtonStyle(FAppStyle::Get(), "Button")
 			.HAlign(HAlign_Left)
-			.ContentPadding(FMargin(2.f, 3.f))
+			.ContentPadding(FMargin(2.f, 3.5f))
 			.ToolTipText(LOCTEXT("VisualAlignTT", "Start Visual Align mode to pick source and target points in the viewport"))
 			.OnClicked_Lambda([]()
 			{
@@ -340,17 +340,17 @@ void FQAAPanelSettingsCustomization::CustomizeDetails(IDetailLayoutBuilder& Deta
 				.AutoWidth()
 				.VAlign(VAlign_Center)
 				[
-					SNew(SBox)
+				SNew(SBox)
 					.WidthOverride(12.f)
 					.HeightOverride(12.f)
 					.HAlign(HAlign_Center)
 					.VAlign(VAlign_Center)
-					[
-						SNew(SImage)
+				[
+					SNew(SImage)
 						.Image(FAppStyle::GetBrush("ViewportToolbar.Snap"))
 						.ColorAndOpacity(FSlateColor::UseForeground())
-					]
 				]
+			]
 				+ SHorizontalBox::Slot()
 				.AutoWidth()
 				.VAlign(VAlign_Center)
