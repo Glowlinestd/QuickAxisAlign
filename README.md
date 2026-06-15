@@ -66,7 +66,7 @@ Use Visual Align when you want to snap a point on one actor to a point on anothe
 6. Press **Enter** or click **Apply** to confirm.
 7. Press **Esc** to cancel at any time.
 
-You can also start Visual Align directly from **Tools > Quick Axis Align > Visual Align**
+You can also start Visual Align directly from **Tools > Quick Axis Align > Visual Align**, or by pressing **ALT + X**.
 
 ![Image](https://github.com/user-attachments/assets/bfe388c0-e60f-47da-83bd-7a828956f4c9)
 
@@ -77,6 +77,7 @@ You can also start Visual Align directly from **Tools > Quick Axis Align > Visua
 - Double-click a transform row label, such as **Location**, **Rotation**, or **Scale**, to toggle all three axes in that row.
 - Use normal transform alignment for batch changes across many actors.
 - Use Visual Align for contact points, surface matching, pivots that are not convenient, or irregular meshes.
+- You can also start Visual Align using the **ALT + X** keyboard shortcut.
 - If **Apply** is disabled, make sure at least two actors are selected for transform channel alignment.
 
 ---
