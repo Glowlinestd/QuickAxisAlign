@@ -1,3 +1,5 @@
+// Copyright Epic Games, Inc. All Rights Reserved.
+
 #include "QuickAxisAlignCommands.h"
 
 #define LOCTEXT_NAMESPACE "FQuickAxisAlignCommands"

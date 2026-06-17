@@ -1,3 +1,5 @@
+// Copyright Epic Games, Inc. All Rights Reserved.
+
 #include "Widgets/SQAACellBorder.h"
 #include "Rendering/DrawElements.h"
 #include "Styling/AppStyle.h"
