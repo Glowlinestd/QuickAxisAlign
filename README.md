@@ -88,5 +88,6 @@ Quick Axis Align helps artists and level designers speed up actor alignment in t
 
 **Resources:**
 
-- 🎮 [Unreal Marketplace](https://www.fab.com/listings)
+- 📹 [Demo video](https://youtu.be/Y1634rkLtoQ?is=N1UiOTkvWY9pU9sl)
+- 🎮 [Unreal Marketplace](https://fab.com/s/5f9d7f5ec90f)
 - 🐛 [Report issues](https://github.com/Glowlinestd/QuickAxisAlign/issues)
