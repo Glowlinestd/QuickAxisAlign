@@ -1,4 +1,4 @@
-![QuickAxisAlign](https://img.shields.io/badge/QuickAxisAlign-v1.0-blue?style=for-the-badge)
+![QuickAxisAlign](https://img.shields.io/badge/QuickAxisAlign-v1.0.1-blue?style=for-the-badge)
 
 # Quick Axis Align
 
@@ -14,7 +14,11 @@ Quickly align multiple actors by Location, Rotation, or Scale with per-channel c
 
 | Unreal Engine | Plugin Version | Support |
 | ------------- | -------------- | ------- |
-| 5.7           | 1.0            | ✅      |
+| 5.8           | 1.0.1          | ✅      |
+| 5.7           | 1.0.0          | ✅      |
+| 5.6           | 1.0.0          | ✅      |
+| 5.5           | 1.0.0          | ✅      |
+| 5.4           | 1.0.0          | ✅      |
 
 ---
 
