@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "1.0.0",
+	"VersionName": "1.0.1",
 	"FriendlyName": "Quick Axis Align",
 	"Description": "Quickly align selected actors using transform channels or visual point picking in the viewport.",
 	"Category": "Tools",
@@ -10,7 +10,7 @@
 	"DocsURL": "https://github.com/Glowlinestd/QuickAxisAlign",
 	"MarketplaceURL": "",
 	"SupportURL": "",
-	"EngineVersion": "5.7.0",
+	"EngineVersion": "5.8.0",
 	"CanContainContent": false,
 	"Installed": true,
 	"Modules": [

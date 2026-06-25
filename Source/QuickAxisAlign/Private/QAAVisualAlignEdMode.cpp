@@ -570,4 +570,14 @@ void FQAAVisualAlignEdMode::Render(const FSceneView* View, FViewport* Viewport, 
 	}
 }
 
+bool FQAAVisualAlignEdMode::UsesTransformWidget() const
+{
+	return false;
+}
+
+bool FQAAVisualAlignEdMode::UsesTransformWidget(UE::Widget::EWidgetMode CheckMode) const
+{
+	return false;
+}
+
 #undef LOCTEXT_NAMESPACE
